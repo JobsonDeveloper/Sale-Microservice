@@ -20,6 +20,7 @@ public class Sale {
     @Id
     private String id;
     private String client_id;
+    private Status status;
     private LocalDateTime date;
     private Double total_value;
     private List<Item> items;
