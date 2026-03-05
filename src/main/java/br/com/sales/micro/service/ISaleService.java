@@ -6,5 +6,5 @@ import br.com.sales.micro.domain.Sale;
 import java.util.List;
 
 public interface ISaleService {
-    public Sale makeSale(String clientId, Double totalValue, List<Item> products);
+    public Sale makeSale(String clientId, Long clientCpf, Double totalValue, List<Item> products);
 }

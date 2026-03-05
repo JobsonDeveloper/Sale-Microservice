@@ -1,14 +1,17 @@
 package br.com.sales.micro.controller;
 
+import br.com.sales.micro.domain.Client;
 import br.com.sales.micro.domain.Sale;
 import br.com.sales.micro.dto.request.MakeSaleDto;
 import br.com.sales.micro.dto.request.ProductBasicInfoDto;
+import br.com.sales.micro.dto.response.ClientDto;
 import br.com.sales.micro.dto.response.ProductDto;
 import br.com.sales.micro.dto.response.ReturnSaleDto;
 import br.com.sales.micro.exception.InconsistentValueException;
 import br.com.sales.micro.service.SaleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -47,7 +50,7 @@ public class SaleController {
                     ),
                     @ApiResponse(
                             responseCode = "400",
-                            description = "Incompatible request data exception!",
+                            description = "Incompatible data!",
                             content = @Content(
                                     mediaType = "application/json",
                                     schema = @Schema(
@@ -57,11 +60,29 @@ public class SaleController {
                     ),
                     @ApiResponse(
                             responseCode = "404",
-                            description = "Product not found!",
+                            description = "Product or Client not found!",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = {
+                                            @ExampleObject(
+                                                    name = "Product not found!",
+                                                    value = "{ \"status\": \"NOT_FOUND\", \"message\": \"Product not found!\" }"
+                                            ),
+                                            @ExampleObject(
+                                                    name = "Client not found!",
+                                                    value = "{ \"status\": \"NOT_FOUND\", \"message\": \"Client not found!\" }"
+                                            )
+                                    }
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "409",
+                            description = "The amount to be paid is inconsistent!",
                             content = @Content(
                                     mediaType = "application/json",
                                     schema = @Schema(
-                                            example = "{ \"status\": \"NOT_FOUND\", \"message\": \"Product not found!\" }")
+                                            example = "{ \"status\": \"CONFLICT\", \"message\": \"The amount to be paid is inconsistent!\" }"
+                                    )
                             )
                     ),
                     @ApiResponse(
@@ -70,18 +91,25 @@ public class SaleController {
                             content = @Content(
                                     mediaType = "application/json",
                                     schema = @Schema(
-                                            example = "{ \"status\": \"INTERNAL_SERVER_ERROR\", \"message\": \"Error creating the sale!!\" }"
+                                            example = "{ \"status\": \"INTERNAL_SERVER_ERROR\", \"message\": \"Error creating the sale!\" }"
                                     )
                             )
                     ),
                     @ApiResponse(
                             responseCode = "502",
-                            description = "Service 'Product Microservice' is unavailable!",
+                            description = "Product or Client microservice are unavailable",
                             content = @Content(
                                     mediaType = "application/json",
-                                    schema = @Schema(
-                                            example = "{ \"status\": \"BAD_GATEWAY\", \"message\": \"Service 'Product Microservice' is unavailable!\" }"
-                                    )
+                                    examples = {
+                                            @ExampleObject(
+                                                    name = "Product microservice unavailable!",
+                                                    value = "{ \"status\": \"BAD_GATEWAY\", \"message\": \"Service 'Product Microservice' is unavailable!\" }"
+                                            ),
+                                            @ExampleObject(
+                                                    name = "Client microservice unavailable",
+                                                    value = "{ \"status\": \"BAD_GATEWAY\", \"message\": \"Service 'Client Microservice' is unavailable!\" }"
+                                            )
+                                    }
                             )
                     )
             }
@@ -91,6 +119,8 @@ public class SaleController {
         List<ProductBasicInfoDto> products = productBarCodeListDto.products();
         List<Long> barCodes = new ArrayList<>();
         double totalValue = 0.0;
+
+        Long clientCpf = saleService.getClientData(clientId).client().getCpf();
 
         products.stream().forEach((info) -> {
             barCodes.add(info.productBarCode());
@@ -102,7 +132,6 @@ public class SaleController {
             for (var buyProduct : products) {
                 if (storeProduct.getBarCode().equals(buyProduct.productBarCode())) {
                     totalValue += storeProduct.getValue() * buyProduct.productQuantity();
-                    ;
                     storeProduct.setQuantity(buyProduct.productQuantity());
                 }
             }
@@ -112,7 +141,7 @@ public class SaleController {
             throw new InconsistentValueException();
         }
 
-        Sale newSale = saleService.makeSale(clientId, totalValue, data.products());
+        Sale newSale = saleService.makeSale(clientId, clientCpf, totalValue, data.products());
         return ResponseEntity.status(HttpStatus.CREATED).body(new ReturnSaleDto("Sale started successfully!", newSale));
     }
 }
