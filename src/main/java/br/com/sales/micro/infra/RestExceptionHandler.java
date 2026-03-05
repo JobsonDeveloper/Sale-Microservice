@@ -1,6 +1,12 @@
 package br.com.sales.micro.infra;
 
 import br.com.sales.micro.exception.*;
+import br.com.sales.micro.exception.client.ClientDataIncompatibleException;
+import br.com.sales.micro.exception.client.ClientNotFoundException;
+import br.com.sales.micro.exception.client.ErrorRetrievingClientDataException;
+import br.com.sales.micro.exception.product.ErrorRetrievingProductDataException;
+import br.com.sales.micro.exception.product.ProductDataIncompatibleException;
+import br.com.sales.micro.exception.product.ProductNotFoundException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -58,21 +64,45 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(defaultErrorResponse);
     }
 
+    @ExceptionHandler(ServiceUnavailableException.class)
+    private ResponseEntity<DefaultErrorResponse> serviceUnavailableHandler(ServiceUnavailableException exception) {
+        DefaultErrorResponse defaultErrorResponse = new DefaultErrorResponse(HttpStatus.BAD_GATEWAY, exception.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(defaultErrorResponse);
+    }
+
     @ExceptionHandler(ProductNotFoundException.class)
     private ResponseEntity<DefaultErrorResponse> productNotFoundHandler(ProductNotFoundException exception) {
         DefaultErrorResponse defaultErrorResponse = new DefaultErrorResponse(HttpStatus.NOT_FOUND, exception.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(defaultErrorResponse);
     }
 
-    @ExceptionHandler(IncompatibleRequestDataException.class)
-    private ResponseEntity<DefaultErrorResponse> incompatibleRequestDataHandler(IncompatibleRequestDataException exception) {
+    @ExceptionHandler(ProductDataIncompatibleException.class)
+    private ResponseEntity<DefaultErrorResponse> productDataIncompatibleDataHandler(ProductDataIncompatibleException exception) {
         DefaultErrorResponse defaultErrorResponse = new DefaultErrorResponse(HttpStatus.BAD_REQUEST, exception.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(defaultErrorResponse);
     }
 
-    @ExceptionHandler(ServiceUnavailableException.class)
-    private ResponseEntity<DefaultErrorResponse> serviceUnavailableHandler(ServiceUnavailableException exception) {
+    @ExceptionHandler(ErrorRetrievingProductDataException.class)
+    private ResponseEntity<DefaultErrorResponse> errorRetrievingProductDataHandler(ErrorRetrievingProductDataException exception) {
         DefaultErrorResponse defaultErrorResponse = new DefaultErrorResponse(HttpStatus.BAD_GATEWAY, exception.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(defaultErrorResponse);
+    }
+
+    @ExceptionHandler(ErrorRetrievingClientDataException.class)
+    private ResponseEntity<DefaultErrorResponse> errorRetrievingClientDataHandler(ErrorRetrievingClientDataException exception) {
+        DefaultErrorResponse defaultErrorResponse = new DefaultErrorResponse(HttpStatus.BAD_GATEWAY, exception.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(defaultErrorResponse);
+    }
+
+    @ExceptionHandler(ClientDataIncompatibleException.class)
+    private ResponseEntity<DefaultErrorResponse> clientDataIncompatibleDataHandler(ClientDataIncompatibleException exception) {
+        DefaultErrorResponse defaultErrorResponse = new DefaultErrorResponse(HttpStatus.BAD_REQUEST, exception.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(defaultErrorResponse);
+    }
+
+    @ExceptionHandler(ClientNotFoundException.class)
+    private ResponseEntity<DefaultErrorResponse> clientNotFoundHandler(ClientNotFoundException exception) {
+        DefaultErrorResponse defaultErrorResponse = new DefaultErrorResponse(HttpStatus.NOT_FOUND, exception.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(defaultErrorResponse);
     }
 }
