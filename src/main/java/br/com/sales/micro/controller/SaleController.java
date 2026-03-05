@@ -4,8 +4,13 @@ import br.com.sales.micro.domain.Sale;
 import br.com.sales.micro.dto.request.MakeSaleDto;
 import br.com.sales.micro.dto.request.ProductBasicInfoDto;
 import br.com.sales.micro.dto.response.ProductDto;
+import br.com.sales.micro.dto.response.ReturnSaleDto;
 import br.com.sales.micro.exception.InconsistentValueException;
 import br.com.sales.micro.service.SaleService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -27,7 +32,61 @@ public class SaleController {
     }
 
     @PostMapping("/api/sale")
-    public ResponseEntity<Sale> makeSale(@Valid @RequestBody MakeSaleDto productBarCodeListDto) {
+    @Operation(
+            summary = "Create a sale",
+            description = "Create a new sale",
+            tags = {"Sale"},
+            responses = {
+                    @ApiResponse(
+                            responseCode = "201",
+                            description = "Sale started successfully!",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = ReturnSaleDto.class)
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "400",
+                            description = "Incompatible request data exception!",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(
+                                            example = "{ \"error\": \"Validation failed\", \"errors\": \"[...]\" }"
+                                    )
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Product not found!",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(
+                                            example = "{ \"status\": \"NOT_FOUND\", \"message\": \"Product not found!\" }")
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "500",
+                            description = "Error creating the sale!",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(
+                                            example = "{ \"status\": \"INTERNAL_SERVER_ERROR\", \"message\": \"Error creating the sale!!\" }"
+                                    )
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "502",
+                            description = "Service 'Product Microservice' is unavailable!",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(
+                                            example = "{ \"status\": \"BAD_GATEWAY\", \"message\": \"Service 'Product Microservice' is unavailable!\" }"
+                                    )
+                            )
+                    )
+            }
+    )
+    public ResponseEntity<ReturnSaleDto> makeSale(@Valid @RequestBody MakeSaleDto productBarCodeListDto) {
         String clientId = productBarCodeListDto.clientId();
         List<ProductBasicInfoDto> products = productBarCodeListDto.products();
         List<Long> barCodes = new ArrayList<>();
@@ -42,17 +101,18 @@ public class SaleController {
         for (var storeProduct : data.products()) {
             for (var buyProduct : products) {
                 if (storeProduct.getBarCode().equals(buyProduct.productBarCode())) {
-                    totalValue += storeProduct.getValue() * buyProduct.productQuantity();;
+                    totalValue += storeProduct.getValue() * buyProduct.productQuantity();
+                    ;
                     storeProduct.setQuantity(buyProduct.productQuantity());
                 }
             }
         }
 
-        if(!productBarCodeListDto.totalValue().equals(totalValue)) {
+        if (!productBarCodeListDto.totalValue().equals(totalValue)) {
             throw new InconsistentValueException();
         }
 
         Sale newSale = saleService.makeSale(clientId, totalValue, data.products());
-        return ResponseEntity.status(HttpStatus.CREATED).body(newSale);
+        return ResponseEntity.status(HttpStatus.CREATED).body(new ReturnSaleDto("Sale started successfully!", newSale));
     }
 }
