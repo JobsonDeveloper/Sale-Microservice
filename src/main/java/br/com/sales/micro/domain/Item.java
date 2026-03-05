@@ -1,8 +1,14 @@
 package br.com.sales.micro.domain;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
 public class Item {
-    private String product_id;
-    private String product_name;
-    private Double product_price;
-    private Integer product_quantity;
+    private String id;
+    private String name;
+    private Long barCode;
+    private Double value;
+    private Long quantity;
 }
