@@ -19,10 +19,10 @@ import java.util.List;
 public class Sale {
     @Id
     private String id;
-    private String clientId;
     private Status status;
     private LocalDateTime date;
     private Double totalValue;
+    private Client client;
     private List<Item> items;
 
     @CreatedDate
