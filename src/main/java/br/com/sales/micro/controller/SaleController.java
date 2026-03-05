@@ -1,6 +1,7 @@
 package br.com.sales.micro.controller;
 
 import br.com.sales.micro.domain.Client;
+import br.com.sales.micro.domain.Item;
 import br.com.sales.micro.domain.Sale;
 import br.com.sales.micro.dto.request.MakeSaleDto;
 import br.com.sales.micro.dto.request.ProductBasicInfoDto;
@@ -126,9 +127,9 @@ public class SaleController {
             barCodes.add(info.productBarCode());
         });
 
-        ProductDto data = saleService.getProductsData(barCodes);
+        List<Item> data = saleService.getProductsData(barCodes).products();
 
-        for (var storeProduct : data.products()) {
+        for (var storeProduct : data) {
             for (var buyProduct : products) {
                 if (storeProduct.getBarCode().equals(buyProduct.productBarCode())) {
                     totalValue += storeProduct.getValue() * buyProduct.productQuantity();
@@ -141,7 +142,7 @@ public class SaleController {
             throw new InconsistentValueException();
         }
 
-        Sale newSale = saleService.makeSale(clientId, clientCpf, totalValue, data.products());
+        Sale newSale = saleService.makeSale(clientId, clientCpf, totalValue, data);
         return ResponseEntity.status(HttpStatus.CREATED).body(new ReturnSaleDto("Sale started successfully!", newSale));
     }
 }
