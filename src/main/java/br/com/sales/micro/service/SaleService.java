@@ -45,10 +45,10 @@ public class SaleService implements ISaleService {
     @Override
     public Sale makeSale(String clientId, Double totalValue, List<Item> products) {
         Sale sale = Sale.builder()
-                .client_id(clientId)
+                .clientId(clientId)
                 .status(Status.CREATED)
                 .date(LocalDateTime.now())
-                .total_value(totalValue)
+                .totalValue(totalValue)
                 .items(products)
                 .created_at(LocalDateTime.now())
                 .build();
