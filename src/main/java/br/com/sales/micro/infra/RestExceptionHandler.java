@@ -5,6 +5,7 @@ import br.com.sales.micro.exception.client.ClientDataIncompatibleException;
 import br.com.sales.micro.exception.client.ClientNotFoundException;
 import br.com.sales.micro.exception.client.ErrorRetrievingClientDataException;
 import br.com.sales.micro.exception.product.ErrorRetrievingProductDataException;
+import br.com.sales.micro.exception.product.InsufficientProductsException;
 import br.com.sales.micro.exception.product.ProductDataIncompatibleException;
 import br.com.sales.micro.exception.product.ProductNotFoundException;
 import org.springframework.http.HttpHeaders;
@@ -86,6 +87,12 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     private ResponseEntity<DefaultErrorResponse> errorRetrievingProductDataHandler(ErrorRetrievingProductDataException exception) {
         DefaultErrorResponse defaultErrorResponse = new DefaultErrorResponse(HttpStatus.BAD_GATEWAY, exception.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(defaultErrorResponse);
+    }
+
+    @ExceptionHandler(InsufficientProductsException.class)
+    private ResponseEntity<DefaultErrorResponse> insufficientProductsHandler(InsufficientProductsException exception) {
+        DefaultErrorResponse defaultErrorResponse = new DefaultErrorResponse(HttpStatus.CONFLICT, exception.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(defaultErrorResponse);
     }
 
     @ExceptionHandler(ErrorRetrievingClientDataException.class)
