@@ -8,7 +8,7 @@ import br.com.sales.micro.dto.request.ProductBarCodeListDto;
 import br.com.sales.micro.events.dto.SaleStartedEventDto;
 import br.com.sales.micro.dto.response.ClientDto;
 import br.com.sales.micro.dto.response.ProductDto;
-import br.com.sales.micro.events.producer.SaleIventProducer;
+import br.com.sales.micro.events.producer.SaleEventProducer;
 import br.com.sales.micro.exception.*;
 import br.com.sales.micro.exception.client.ClientDataIncompatibleException;
 import br.com.sales.micro.exception.client.ClientNotFoundException;
@@ -29,17 +29,17 @@ public class SaleService implements ISaleService {
     private final ISaleRepository saleRespository;
     private final ProductClient productClient;
     private final ClientClient clientClient;
-    private final SaleIventProducer saleIventProducer;
+    private final SaleEventProducer saleEventProducer;
 
     public SaleService(
             ISaleRepository saleRespository,
             ProductClient productClient,
-            ClientClient clientClient, SaleIventProducer saleIventProducer
+            ClientClient clientClient, SaleEventProducer saleEventProducer
     ) {
         this.saleRespository = saleRespository;
         this.productClient = productClient;
         this.clientClient = clientClient;
-        this.saleIventProducer = saleIventProducer;
+        this.saleEventProducer = saleEventProducer;
     }
 
     @Override
@@ -109,7 +109,7 @@ public class SaleService implements ISaleService {
                 newSale.getItems()
         );
 
-        saleIventProducer.saleStartedEvent(event);
+        saleEventProducer.saleStartedEvent(event);
 
         return newSale;
     }
