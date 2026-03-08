@@ -105,10 +105,11 @@ public class SaleService implements ISaleService {
         SaleStartedEventDto event = new SaleStartedEventDto(
                 newSale.getId(),
                 newSale.getClient().getId(),
+                newSale.getStatus(),
                 newSale.getItems()
         );
 
-        saleIventProducer.sendSaleStartedEvent(event);
+        saleIventProducer.saleStartedEvent(event);
 
         return newSale;
     }
