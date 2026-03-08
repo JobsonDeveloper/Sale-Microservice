@@ -5,14 +5,14 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
-public class SaleIventProducer {
+public class SaleEventProducer {
     private final KafkaTemplate<String, SaleStartedEventDto> kafkaTemplate;
 
-    public SaleIventProducer(KafkaTemplate<String, SaleStartedEventDto> kafkaTemplate) {
+    public SaleEventProducer(KafkaTemplate<String, SaleStartedEventDto> kafkaTemplate) {
         this.kafkaTemplate = kafkaTemplate;
     }
 
     public void saleStartedEvent(SaleStartedEventDto saleInfo) {
-        kafkaTemplate.send("sale-topic", saleInfo);
+        kafkaTemplate.send("sale-created", saleInfo);
     }
 }
