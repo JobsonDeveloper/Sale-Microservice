@@ -9,6 +9,7 @@ import br.com.sales.micro.dto.response.ClientDto;
 import br.com.sales.micro.dto.response.ProductDto;
 import br.com.sales.micro.dto.response.ReturnSaleDto;
 import br.com.sales.micro.exception.InconsistentValueException;
+import br.com.sales.micro.exception.product.InsufficientProductsException;
 import br.com.sales.micro.service.SaleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -127,13 +128,22 @@ public class SaleController {
             barCodes.add(info.productBarCode());
         });
 
-        List<Item> data = saleService.getProductsData(barCodes).products();
+        List<Item> productsData = saleService.getProductsData(barCodes).products();
 
-        for (var storeProduct : data) {
+        for (var storeProduct : productsData) {
             for (var buyProduct : products) {
-                if (storeProduct.getBarCode().equals(buyProduct.productBarCode())) {
-                    totalValue += storeProduct.getValue() * buyProduct.productQuantity();
-                    storeProduct.setQuantity(buyProduct.productQuantity());
+                Long storedProductCode = storeProduct.getBarCode();
+                Long storedProductQuantity = storeProduct.getQuantity();
+                Long desiredProductCode = buyProduct.productBarCode();
+                Long desiredProductQuantity = buyProduct.productQuantity();
+
+                if (storedProductCode.equals(desiredProductCode)) {
+                    if((storedProductQuantity - desiredProductQuantity) < 0) {
+                            throw new InsufficientProductsException();
+                    }
+
+                    totalValue += storeProduct.getValue() * desiredProductQuantity;
+                    storeProduct.setQuantity(desiredProductQuantity);
                 }
             }
         }
@@ -142,7 +152,7 @@ public class SaleController {
             throw new InconsistentValueException();
         }
 
-        Sale newSale = saleService.makeSale(clientId, clientCpf, totalValue, data);
+        Sale newSale = saleService.makeSale(clientId, clientCpf, totalValue, productsData);
         return ResponseEntity.status(HttpStatus.CREATED).body(new ReturnSaleDto("Sale started successfully!", newSale));
     }
 }
