@@ -8,7 +8,6 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.mongodb.core.mapping.Document;
-
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -20,10 +19,11 @@ import java.util.List;
 public class Sale {
     @Id
     private String id;
+    private Status status;
     private LocalDateTime date;
-    private Double total_value;
+    private Double totalValue;
     private Client client;
-    private List<Product> products;
+    private List<Item> items;
 
     @CreatedDate
     private LocalDateTime created_at;
