@@ -13,3 +13,9 @@ MONGO_DB=
 MONGO_USER=
 MONGO_PASS=
 spring.data.mongodb.uri=mongodb://${MONGO_USER}:${MONGO_PASS}@${MONGO_HOST}:${MONGO_PORT}/${MONGO_DB}?authSource=admin
+
+#Apache Kafka
+spring.kafka.bootstrap-servers=kafka:9092
+spring.kafka.producer.key-serializer=org.apache.kafka.common.serialization.StringSerializer
+spring.kafka.producer.value-serializer=org.springframework.kafka.support.serializer.JsonSerializer
+spring.kafka.producer.properties.spring.json.add.type.headers=false
