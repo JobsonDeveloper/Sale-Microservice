@@ -1,17 +1,17 @@
 package br.com.sales.micro.controller;
 
-import br.com.sales.micro.domain.Client;
 import br.com.sales.micro.domain.Item;
 import br.com.sales.micro.domain.Sale;
 import br.com.sales.micro.dto.request.MakeSaleDto;
 import br.com.sales.micro.dto.request.ProductBasicInfoDto;
-import br.com.sales.micro.dto.response.ClientDto;
-import br.com.sales.micro.dto.response.ProductDto;
 import br.com.sales.micro.dto.response.ReturnSaleDto;
+import br.com.sales.micro.dto.response.SaleInfoDto;
 import br.com.sales.micro.exception.InconsistentValueException;
 import br.com.sales.micro.exception.product.InsufficientProductsException;
+import br.com.sales.micro.service.ISaleService;
 import br.com.sales.micro.service.SaleService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -20,9 +20,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,10 +28,10 @@ import java.util.List;
 @RestController
 @Tag(name = "Sale", description = "Sale operations")
 public class SaleController {
-    private final SaleService saleService;
+    private final ISaleService iSaleService;
 
-    public SaleController(SaleService saleService) {
-        this.saleService = saleService;
+    public SaleController(ISaleService iSaleService) {
+        this.iSaleService = iSaleService;
     }
 
     @PostMapping("/api/sale")
@@ -122,13 +120,13 @@ public class SaleController {
         List<Long> barCodes = new ArrayList<>();
         double totalValue = 0.0;
 
-        Long clientCpf = saleService.getClientData(clientId).client().getCpf();
+        Long clientCpf = iSaleService.getClientData(clientId).client().getCpf();
 
         products.stream().forEach((info) -> {
             barCodes.add(info.productBarCode());
         });
 
-        List<Item> productsData = saleService.getProductsData(barCodes).products();
+        List<Item> productsData = iSaleService.getProductsData(barCodes).products();
 
         for (var storeProduct : productsData) {
             for (var buyProduct : products) {
@@ -138,8 +136,8 @@ public class SaleController {
                 Long desiredProductQuantity = buyProduct.productQuantity();
 
                 if (storedProductCode.equals(desiredProductCode)) {
-                    if((storedProductQuantity - desiredProductQuantity) < 0) {
-                            throw new InsufficientProductsException();
+                    if ((storedProductQuantity - desiredProductQuantity) < 0) {
+                        throw new InsufficientProductsException();
                     }
 
                     totalValue += storeProduct.getValue() * desiredProductQuantity;
@@ -152,7 +150,41 @@ public class SaleController {
             throw new InconsistentValueException();
         }
 
-        Sale newSale = saleService.makeSale(clientId, clientCpf, totalValue, productsData);
+        Sale newSale = iSaleService.makeSale(clientId, clientCpf, totalValue, productsData);
         return ResponseEntity.status(HttpStatus.CREATED).body(new ReturnSaleDto("Sale started successfully!", newSale));
+    }
+
+    @GetMapping("/api/sale/{id}/info")
+    @Operation(
+            summary = "Get sale info",
+            description = "Return information of a sale",
+            tags = {"Sale"},
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Sale info returned successfully!",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = SaleInfoDto.class)
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Sale not found!",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(
+                                            example = "{ \"status\": \"NOT_FOUND\", \"message\": \"Sale not found!\" }"
+                                    )
+                            )
+                    )
+            }
+    )
+    public ResponseEntity<SaleInfoDto> getSaleInfo(
+            @Parameter(description = "Sale id", required = true)
+            @PathVariable String id
+    ) {
+        Sale sale = iSaleService.getSaleInfo(id);
+        return ResponseEntity.status(HttpStatus.OK).body(new SaleInfoDto("Sale info returned successfully!", sale));
     }
 }

@@ -71,6 +71,12 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(defaultErrorResponse);
     }
 
+    @ExceptionHandler(SaleNotFoundException.class)
+    private ResponseEntity<DefaultErrorResponse> saleNotFoundHandler(SaleNotFoundException exception) {
+        DefaultErrorResponse defaultErrorResponse = new DefaultErrorResponse(HttpStatus.NOT_FOUND, exception.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(defaultErrorResponse);
+    }
+
     @ExceptionHandler(ProductNotFoundException.class)
     private ResponseEntity<DefaultErrorResponse> productNotFoundHandler(ProductNotFoundException exception) {
         DefaultErrorResponse defaultErrorResponse = new DefaultErrorResponse(HttpStatus.NOT_FOUND, exception.getMessage());
