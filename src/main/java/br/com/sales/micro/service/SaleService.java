@@ -23,20 +23,21 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class SaleService implements ISaleService {
-    private final ISaleRepository saleRespository;
+    private final ISaleRepository iSaleRepository;
     private final ProductClient productClient;
     private final ClientClient clientClient;
     private final SaleEventProducer saleEventProducer;
 
     public SaleService(
-            ISaleRepository saleRespository,
+            ISaleRepository iSaleRepository,
             ProductClient productClient,
             ClientClient clientClient, SaleEventProducer saleEventProducer
     ) {
-        this.saleRespository = saleRespository;
+        this.iSaleRepository = iSaleRepository;
         this.productClient = productClient;
         this.clientClient = clientClient;
         this.saleEventProducer = saleEventProducer;
@@ -96,7 +97,7 @@ public class SaleService implements ISaleService {
                 .created_at(LocalDateTime.now())
                 .build();
 
-        Sale newSale = saleRespository.save(sale);
+        Sale newSale = iSaleRepository.save(sale);
 
         if (newSale.getId() == null) {
             throw new ErrorCreatingTheSaleException();
@@ -112,5 +113,16 @@ public class SaleService implements ISaleService {
         saleEventProducer.saleStartedEvent(event);
 
         return newSale;
+    }
+
+    @Override
+    public Sale getSaleInfo(String id) {
+        Optional<Sale> sale = iSaleRepository.findById(id);
+
+        if(!sale.isPresent()) {
+            throw new SaleNotFoundException();
+        }
+
+        return sale.get();
     }
 }
