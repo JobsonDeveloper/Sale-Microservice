@@ -1,6 +1,6 @@
-package br.com.sales.micro.events.producer;
+package br.com.sales.micro.event.producer;
 
-import br.com.sales.micro.events.dto.SaleStartedEventDto;
+import br.com.sales.micro.event.dto.SaleStartedEventDto;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
