@@ -1,5 +1,7 @@
+name: e-sale
+
 services:
-  sale-microservice:
+  sale:
     build: .
     ports:
       - "8084:8084"
