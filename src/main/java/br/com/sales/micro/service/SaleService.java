@@ -82,7 +82,12 @@ public class SaleService implements ISaleService {
     }
 
     @Override
-    public Sale makeSale(String clientId, Long clientCpf, Double totalValue, List<Item> products) {
+    public Sale makeSale(
+            String clientId,
+            Long clientCpf,
+            Double totalValue,
+            List<Item> products
+    ) {
         Client client = Client.builder()
                 .id(clientId)
                 .cpf(clientCpf)
@@ -119,7 +124,7 @@ public class SaleService implements ISaleService {
     public Sale getSaleInfo(String id) {
         Optional<Sale> sale = iSaleRepository.findById(id);
 
-        if(!sale.isPresent()) {
+        if (!sale.isPresent()) {
             throw new SaleNotFoundException();
         }
 

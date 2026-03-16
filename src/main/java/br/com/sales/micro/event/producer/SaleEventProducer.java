@@ -13,6 +13,6 @@ public class SaleEventProducer {
     }
 
     public void saleStartedEvent(SaleStartedEventDto saleInfo) {
-        kafkaTemplate.send("sale-created", saleInfo);
+        kafkaTemplate.send("sale", saleInfo);
     }
 }
