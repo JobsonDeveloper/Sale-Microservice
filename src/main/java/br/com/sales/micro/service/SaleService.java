@@ -5,7 +5,7 @@ import br.com.sales.micro.domain.Item;
 import br.com.sales.micro.domain.Sale;
 import br.com.sales.micro.domain.Status;
 import br.com.sales.micro.dto.request.ProductBarCodeListDto;
-import br.com.sales.micro.event.dto.SaleStartedEventDto;
+import br.com.sales.micro.event.dto.SetSaleEventDto;
 import br.com.sales.micro.dto.response.ClientDto;
 import br.com.sales.micro.dto.response.ProductDto;
 import br.com.sales.micro.event.producer.SaleEventProducer;
@@ -108,14 +108,14 @@ public class SaleService implements ISaleService {
             throw new ErrorCreatingTheSaleException();
         }
 
-        SaleStartedEventDto event = new SaleStartedEventDto(
+        SetSaleEventDto event = new SetSaleEventDto(
                 newSale.getId(),
                 newSale.getClient().getId(),
                 newSale.getStatus(),
                 newSale.getItems()
         );
 
-        saleEventProducer.saleStartedEvent(event);
+        saleEventProducer.setSaleEvent(event);
 
         return newSale;
     }

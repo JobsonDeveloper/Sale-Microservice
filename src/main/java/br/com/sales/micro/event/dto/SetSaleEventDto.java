@@ -5,7 +5,7 @@ import br.com.sales.micro.domain.Status;
 
 import java.util.List;
 
-public record SaleStartedEventDto(
+public record SetSaleEventDto(
         String id,
         String clientId,
         Status status,

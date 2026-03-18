@@ -1,13 +1,17 @@
 package br.com.sales.micro.controller;
 
+import br.com.sales.micro.domain.Completed;
 import br.com.sales.micro.domain.Item;
 import br.com.sales.micro.domain.Sale;
 import br.com.sales.micro.dto.request.MakeSaleDto;
 import br.com.sales.micro.dto.request.ProductBasicInfoDto;
+import br.com.sales.micro.dto.request.SaleCompletedDto;
+import br.com.sales.micro.dto.response.CompletedDto;
 import br.com.sales.micro.dto.response.ReturnSaleDto;
 import br.com.sales.micro.dto.response.SaleInfoDto;
 import br.com.sales.micro.exception.InconsistentValueException;
 import br.com.sales.micro.exception.product.InsufficientProductsException;
+import br.com.sales.micro.service.ICompletedService;
 import br.com.sales.micro.service.ISaleService;
 import br.com.sales.micro.service.SaleService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -29,9 +33,14 @@ import java.util.List;
 @Tag(name = "Sale", description = "Sale operations")
 public class SaleController {
     private final ISaleService iSaleService;
+    private final ICompletedService iCompletedService;
 
-    public SaleController(ISaleService iSaleService) {
+    public SaleController(
+            ISaleService iSaleService,
+            ICompletedService iCompletedService
+    ) {
         this.iSaleService = iSaleService;
+        this.iCompletedService = iCompletedService;
     }
 
     @PostMapping("/api/sale")
@@ -186,5 +195,71 @@ public class SaleController {
     ) {
         Sale sale = iSaleService.getSaleInfo(id);
         return ResponseEntity.status(HttpStatus.OK).body(new SaleInfoDto("Sale info returned successfully!", sale));
+    }
+
+    @PostMapping("/api/sale/delivered")
+    @Operation(
+            summary = "Get sale info",
+            description = "Return information of a sale",
+            tags = {"Sale"},
+            responses = {
+                    @ApiResponse(
+                            responseCode = "201",
+                            description = "Sale info returned successfully!",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = CompletedDto.class)
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "400",
+                            description = "Incompatible data!",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(
+                                            example = "{ \"error\": \"Validation failed\", \"errors\": \"[...]\" }"
+                                    )
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Sale not found!",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(
+                                            example = "{ \"status\": \"NOT_FOUND\", \"message\": \"Sale not found!\" }"
+                                    )
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "409",
+                            description = "The purchase payment was not completed!",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(
+                                            example = "{ \"status\": \"CONFLICT\", \"message\": \"The purchase payment was not completed!\" }"
+                                    )
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "500",
+                            description = "It was not possible to mark the sale as completed!!",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(
+                                            example = "{ \"status\": \"INTERNAL_SERVER_ERROR\", \"message\": \"It was not possible to mark the sale as completed!\" }"
+                                    )
+                            )
+                    )
+            }
+    )
+    public ResponseEntity<CompletedDto> deliveryCompleted(@Valid @RequestBody SaleCompletedDto saleCompletedDto) {
+        String saleId = saleCompletedDto.saleId();
+        Completed completed = iCompletedService.markSaleAsCompleted(saleId);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(new CompletedDto(
+                "Sale marked as completed successfully!",
+                completed
+        ));
     }
 }
