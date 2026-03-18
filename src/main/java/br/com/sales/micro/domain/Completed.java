@@ -9,22 +9,18 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.mongodb.core.mapping.Document;
-import java.time.LocalDateTime;
-import java.util.List;
 
-@Document(collection = "sales")
-@Data
+import java.time.LocalDateTime;
+
 @Builder
+@Document(collection = "completed")
+@Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class Sale {
+public class Completed {
     @Id
     private String id;
-    private Status status;
-    private LocalDateTime date;
-    private Double totalValue;
-    private Client client;
-    private List<Item> items;
+    private Sale sale;
 
     @CreatedDate
     private LocalDateTime created_at;
