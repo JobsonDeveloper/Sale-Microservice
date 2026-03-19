@@ -131,4 +131,16 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         DefaultErrorResponse defaultErrorResponse = new DefaultErrorResponse(HttpStatus.CONFLICT, exception.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(defaultErrorResponse);
     }
+
+    @ExceptionHandler(PermissionDeniedException.class)
+    private ResponseEntity<DefaultErrorResponse> permissionDeniedHandler(PermissionDeniedException exception) {
+        DefaultErrorResponse defaultErrorResponse = new DefaultErrorResponse(HttpStatus.UNAUTHORIZED, exception.getMessage());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(defaultErrorResponse);
+    }
+
+    @ExceptionHandler(ErrorCancelingSaleException.class)
+    private ResponseEntity<DefaultErrorResponse> errorCancelingSaleHandler(ErrorCancelingSaleException exception) {
+        DefaultErrorResponse defaultErrorResponse = new DefaultErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(defaultErrorResponse);
+    }
 }

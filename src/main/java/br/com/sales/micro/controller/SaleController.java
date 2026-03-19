@@ -3,17 +3,18 @@ package br.com.sales.micro.controller;
 import br.com.sales.micro.domain.Completed;
 import br.com.sales.micro.domain.Item;
 import br.com.sales.micro.domain.Sale;
+import br.com.sales.micro.dto.request.CancelSaleDto;
 import br.com.sales.micro.dto.request.MakeSaleDto;
 import br.com.sales.micro.dto.request.ProductBasicInfoDto;
-import br.com.sales.micro.dto.request.SaleCompletedDto;
-import br.com.sales.micro.dto.response.CompletedDto;
+import br.com.sales.micro.dto.response.SaleCanceledDto;
+import br.com.sales.micro.dto.response.SaleCompletedDto;
 import br.com.sales.micro.dto.response.ReturnSaleDto;
 import br.com.sales.micro.dto.response.SaleInfoDto;
 import br.com.sales.micro.exception.InconsistentValueException;
 import br.com.sales.micro.exception.product.InsufficientProductsException;
+import br.com.sales.micro.service.ICanceledService;
 import br.com.sales.micro.service.ICompletedService;
 import br.com.sales.micro.service.ISaleService;
-import br.com.sales.micro.service.SaleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -34,13 +35,15 @@ import java.util.List;
 public class SaleController {
     private final ISaleService iSaleService;
     private final ICompletedService iCompletedService;
+    private final ICanceledService iCanceledService;
 
     public SaleController(
             ISaleService iSaleService,
-            ICompletedService iCompletedService
+            ICompletedService iCompletedService, ICanceledService iCanceledService
     ) {
         this.iSaleService = iSaleService;
         this.iCompletedService = iCompletedService;
+        this.iCanceledService = iCanceledService;
     }
 
     @PostMapping("/api/sale")
@@ -208,7 +211,7 @@ public class SaleController {
                             description = "Sale info returned successfully!",
                             content = @Content(
                                     mediaType = "application/json",
-                                    schema = @Schema(implementation = CompletedDto.class)
+                                    schema = @Schema(implementation = SaleCompletedDto.class)
                             )
                     ),
                     @ApiResponse(
@@ -253,13 +256,85 @@ public class SaleController {
                     )
             }
     )
-    public ResponseEntity<CompletedDto> deliveryCompleted(@Valid @RequestBody SaleCompletedDto saleCompletedDto) {
+    public ResponseEntity<SaleCompletedDto> deliveryCompleted(@Valid @RequestBody br.com.sales.micro.dto.request.SaleCompletedDto saleCompletedDto) {
         String saleId = saleCompletedDto.saleId();
         Completed completed = iCompletedService.markSaleAsCompleted(saleId);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(new CompletedDto(
+        return ResponseEntity.status(HttpStatus.CREATED).body(new SaleCompletedDto(
                 "Sale marked as completed successfully!",
                 completed
         ));
+    }
+
+    @PostMapping("/api/sale/cancel")
+    @Operation(
+            summary = "Cancel a sale",
+            description = "Route to cancel a sale",
+            tags = {"Sale"},
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Sale canceled successfully!",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = SaleCanceledDto.class)
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "400",
+                            description = "Incompatible data!",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(
+                                            example = "{ \"error\": \"Validation failed\", \"errors\": \"[...]\" }"
+                                    )
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "401",
+                            description = "Permission denied! Sale not linked to this user!",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = {
+                                            @ExampleObject(
+                                                    name = "Incompatible user",
+                                                    value = "{ \"status\": \"UNAUTHORIZED\", \"message\": \"Permission denied! Sale not linked to this user!\" }"
+                                            ),
+                                            @ExampleObject(
+                                                    name = "Incompatible sale status",
+                                                    value = "It is no longer possible to cancel the sale!"
+                                            )
+                                    }
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Sale not found!",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(
+                                            example = "{ \"status\": \"NOT_FOUND\", \"message\": \"Sale not found!\" }"
+                                    )
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "500",
+                            description = "It was not possible to cancel the sale!",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(
+                                            example = "{ \"status\": \"INTERNAL_SERVER_ERROR\", \"message\": \"It was not possible to cancel the sale!\" }"
+                                    )
+                            )
+                    )
+            }
+    )
+    public ResponseEntity<SaleCanceledDto> cancelSale(@Valid @RequestBody CancelSaleDto cancelSaleDto) {
+        String saleId = cancelSaleDto.saleId();
+        String clientId = cancelSaleDto.clientId();
+
+        iCanceledService.cancelSale(saleId, clientId);
+
+        return ResponseEntity.status(HttpStatus.OK).body(new SaleCanceledDto("Sale canceled successfully!"));
     }
 }

@@ -1,4 +1,4 @@
-package br.com.sales.micro.service;
+package br.com.sales.micro.service.imp;
 
 import br.com.sales.micro.domain.Client;
 import br.com.sales.micro.domain.Item;
@@ -17,6 +17,9 @@ import br.com.sales.micro.exception.product.ErrorRetrievingProductDataException;
 import br.com.sales.micro.exception.product.ProductDataIncompatibleException;
 import br.com.sales.micro.exception.product.ProductNotFoundException;
 import br.com.sales.micro.respository.ISaleRepository;
+import br.com.sales.micro.service.ClientClient;
+import br.com.sales.micro.service.ISaleService;
+import br.com.sales.micro.service.ProductClient;
 import feign.FeignException;
 import feign.RetryableException;
 import org.springframework.stereotype.Service;
