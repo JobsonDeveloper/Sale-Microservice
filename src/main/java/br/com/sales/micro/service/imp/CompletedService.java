@@ -1,4 +1,4 @@
-package br.com.sales.micro.service;
+package br.com.sales.micro.service.imp;
 
 import br.com.sales.micro.domain.Completed;
 import br.com.sales.micro.domain.Sale;
@@ -10,6 +10,7 @@ import br.com.sales.micro.exception.ErrorMarkingTheSaleAsCompletedException;
 import br.com.sales.micro.exception.SaleNotFoundException;
 import br.com.sales.micro.respository.ICompletedRepository;
 import br.com.sales.micro.respository.ISaleRepository;
+import br.com.sales.micro.service.ICompletedService;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
