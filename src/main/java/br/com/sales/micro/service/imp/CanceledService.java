@@ -44,7 +44,7 @@ public class CanceledService implements ICanceledService {
             throw new PermissionDeniedException();
         }
 
-        if (saleStatus.equals(Status.PAID) || saleStatus.equals(Status.DELIVERED)) {
+        if (saleStatus.equals(Status.DELIVERED)) {
             throw new PermissionDeniedException("It is no longer possible to cancel the sale!");
         }
 

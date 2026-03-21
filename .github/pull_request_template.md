@@ -4,6 +4,11 @@ Describe here the changes that this PR implements.
 
 ---
 
+## ✔️ Related issue:
+00 - Issue name
+
+---
+
 ## ✅ Type of changes
 
 - [ ] Bugfix
