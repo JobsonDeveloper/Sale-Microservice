@@ -132,7 +132,7 @@ public class SaleController {
         List<Long> barCodes = new ArrayList<>();
         double totalValue = 0.0;
 
-        Long clientCpf = iSaleService.getClientData(clientId).client().getCpf();
+        String clientCpf = iSaleService.getClientData(clientId).client().getCpf();
 
         products.stream().forEach((info) -> {
             barCodes.add(info.productBarCode());
