@@ -87,7 +87,7 @@ public class SaleService implements ISaleService {
     @Override
     public Sale makeSale(
             String clientId,
-            Long clientCpf,
+            String clientCpf,
             Double totalValue,
             List<Item> products
     ) {

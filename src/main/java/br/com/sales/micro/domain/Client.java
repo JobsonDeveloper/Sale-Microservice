@@ -9,5 +9,5 @@ import lombok.*;
 @NoArgsConstructor
 public class Client {
     private String id;
-    private Long cpf;
+    private String cpf;
 }
