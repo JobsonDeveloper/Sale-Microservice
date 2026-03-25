@@ -140,12 +140,13 @@ public class SaleController {
 
         List<Item> productsData = iSaleService.getProductsData(barCodes).products();
 
+        // Stock update
         for (var storeProduct : productsData) {
             for (var buyProduct : products) {
                 Long storedProductCode = storeProduct.getBarCode();
-                Long storedProductQuantity = storeProduct.getQuantity();
+                Integer storedProductQuantity = storeProduct.getQuantity();
                 Long desiredProductCode = buyProduct.productBarCode();
-                Long desiredProductQuantity = buyProduct.productQuantity();
+                Integer desiredProductQuantity = buyProduct.productQuantity();
 
                 if (storedProductCode.equals(desiredProductCode)) {
                     if ((storedProductQuantity - desiredProductQuantity) < 0) {
