@@ -1,5 +1,6 @@
 package br.com.sales.micro.infra;
 
+import br.com.sales.micro.dto.response.PurchaseNotPaidException;
 import br.com.sales.micro.exception.*;
 import br.com.sales.micro.exception.client.ClientDataIncompatibleException;
 import br.com.sales.micro.exception.client.ClientNotFoundException;
@@ -71,6 +72,12 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(defaultErrorResponse);
     }
 
+    @ExceptionHandler(SaleNotFoundException.class)
+    private ResponseEntity<DefaultErrorResponse> saleNotFoundHandler(SaleNotFoundException exception) {
+        DefaultErrorResponse defaultErrorResponse = new DefaultErrorResponse(HttpStatus.NOT_FOUND, exception.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(defaultErrorResponse);
+    }
+
     @ExceptionHandler(ProductNotFoundException.class)
     private ResponseEntity<DefaultErrorResponse> productNotFoundHandler(ProductNotFoundException exception) {
         DefaultErrorResponse defaultErrorResponse = new DefaultErrorResponse(HttpStatus.NOT_FOUND, exception.getMessage());
@@ -111,5 +118,29 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     private ResponseEntity<DefaultErrorResponse> clientNotFoundHandler(ClientNotFoundException exception) {
         DefaultErrorResponse defaultErrorResponse = new DefaultErrorResponse(HttpStatus.NOT_FOUND, exception.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(defaultErrorResponse);
+    }
+
+    @ExceptionHandler(ErrorMarkingTheSaleAsCompletedException.class)
+    private ResponseEntity<DefaultErrorResponse> errorMarkingTheSaleAsCompletedHandler(ErrorMarkingTheSaleAsCompletedException exception) {
+        DefaultErrorResponse defaultErrorResponse = new DefaultErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(defaultErrorResponse);
+    }
+
+    @ExceptionHandler(PurchaseNotPaidException.class)
+    private ResponseEntity<DefaultErrorResponse> purchaseNotPaidHandler(PurchaseNotPaidException exception) {
+        DefaultErrorResponse defaultErrorResponse = new DefaultErrorResponse(HttpStatus.CONFLICT, exception.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(defaultErrorResponse);
+    }
+
+    @ExceptionHandler(PermissionDeniedException.class)
+    private ResponseEntity<DefaultErrorResponse> permissionDeniedHandler(PermissionDeniedException exception) {
+        DefaultErrorResponse defaultErrorResponse = new DefaultErrorResponse(HttpStatus.UNAUTHORIZED, exception.getMessage());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(defaultErrorResponse);
+    }
+
+    @ExceptionHandler(ErrorCancelingSaleException.class)
+    private ResponseEntity<DefaultErrorResponse> errorCancelingSaleHandler(ErrorCancelingSaleException exception) {
+        DefaultErrorResponse defaultErrorResponse = new DefaultErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(defaultErrorResponse);
     }
 }

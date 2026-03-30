@@ -1,11 +1,11 @@
-package br.com.sales.micro.events.dto;
+package br.com.sales.micro.event.dto;
 
 import br.com.sales.micro.domain.Item;
 import br.com.sales.micro.domain.Status;
 
 import java.util.List;
 
-public record SaleStartedEventDto(
+public record SetSaleEventDto(
         String id,
         String clientId,
         Status status,

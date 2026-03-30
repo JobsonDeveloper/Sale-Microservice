@@ -1,14 +1,14 @@
-package br.com.sales.micro.service;
+package br.com.sales.micro.service.imp;
 
 import br.com.sales.micro.domain.Client;
 import br.com.sales.micro.domain.Item;
 import br.com.sales.micro.domain.Sale;
 import br.com.sales.micro.domain.Status;
 import br.com.sales.micro.dto.request.ProductBarCodeListDto;
-import br.com.sales.micro.events.dto.SaleStartedEventDto;
+import br.com.sales.micro.event.dto.SetSaleEventDto;
 import br.com.sales.micro.dto.response.ClientDto;
 import br.com.sales.micro.dto.response.ProductDto;
-import br.com.sales.micro.events.producer.SaleEventProducer;
+import br.com.sales.micro.event.producer.SaleEventProducer;
 import br.com.sales.micro.exception.*;
 import br.com.sales.micro.exception.client.ClientDataIncompatibleException;
 import br.com.sales.micro.exception.client.ClientNotFoundException;
@@ -17,26 +17,30 @@ import br.com.sales.micro.exception.product.ErrorRetrievingProductDataException;
 import br.com.sales.micro.exception.product.ProductDataIncompatibleException;
 import br.com.sales.micro.exception.product.ProductNotFoundException;
 import br.com.sales.micro.respository.ISaleRepository;
+import br.com.sales.micro.service.ClientClient;
+import br.com.sales.micro.service.ISaleService;
+import br.com.sales.micro.service.ProductClient;
 import feign.FeignException;
 import feign.RetryableException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class SaleService implements ISaleService {
-    private final ISaleRepository saleRespository;
+    private final ISaleRepository iSaleRepository;
     private final ProductClient productClient;
     private final ClientClient clientClient;
     private final SaleEventProducer saleEventProducer;
 
     public SaleService(
-            ISaleRepository saleRespository,
+            ISaleRepository iSaleRepository,
             ProductClient productClient,
             ClientClient clientClient, SaleEventProducer saleEventProducer
     ) {
-        this.saleRespository = saleRespository;
+        this.iSaleRepository = iSaleRepository;
         this.productClient = productClient;
         this.clientClient = clientClient;
         this.saleEventProducer = saleEventProducer;
@@ -81,7 +85,12 @@ public class SaleService implements ISaleService {
     }
 
     @Override
-    public Sale makeSale(String clientId, Long clientCpf, Double totalValue, List<Item> products) {
+    public Sale makeSale(
+            String clientId,
+            String clientCpf,
+            Double totalValue,
+            List<Item> products
+    ) {
         Client client = Client.builder()
                 .id(clientId)
                 .cpf(clientCpf)
@@ -96,21 +105,32 @@ public class SaleService implements ISaleService {
                 .created_at(LocalDateTime.now())
                 .build();
 
-        Sale newSale = saleRespository.save(sale);
+        Sale newSale = iSaleRepository.save(sale);
 
         if (newSale.getId() == null) {
             throw new ErrorCreatingTheSaleException();
         }
 
-        SaleStartedEventDto event = new SaleStartedEventDto(
+        SetSaleEventDto event = new SetSaleEventDto(
                 newSale.getId(),
                 newSale.getClient().getId(),
                 newSale.getStatus(),
                 newSale.getItems()
         );
 
-        saleEventProducer.saleStartedEvent(event);
+        saleEventProducer.setSaleEvent(event);
 
         return newSale;
+    }
+
+    @Override
+    public Sale getSaleInfo(String id) {
+        Optional<Sale> sale = iSaleRepository.findById(id);
+
+        if (!sale.isPresent()) {
+            throw new SaleNotFoundException();
+        }
+
+        return sale.get();
     }
 }
