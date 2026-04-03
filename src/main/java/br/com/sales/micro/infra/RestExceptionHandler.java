@@ -60,8 +60,8 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(defaultErrorResponse);
     }
 
-    @ExceptionHandler(ErrorCreatingTheSaleException.class)
-    private ResponseEntity<DefaultErrorResponse> errorCreatingTheSaleHandler(ErrorCreatingTheSaleException exception) {
+    @ExceptionHandler({ErrorCreatingTheSaleException.class, ErrorDeletingSaleException.class, ErrorTransferringSalesDataToCompleted.class})
+    private ResponseEntity<DefaultErrorResponse> internalErrorHandler(RuntimeException exception) {
         DefaultErrorResponse defaultErrorResponse = new DefaultErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(defaultErrorResponse);
     }
