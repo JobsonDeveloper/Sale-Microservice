@@ -53,6 +53,7 @@ public class SaleConsumer {
 
             if(deletedSale.isPresent()) throw new ErrorDeletingSaleException();
 
+            sale.get().setStatus(Status.PAID);
             Completed completedSale = Completed.builder()
                     .sale(sale.get())
                     .created_at(LocalDateTime.now())
