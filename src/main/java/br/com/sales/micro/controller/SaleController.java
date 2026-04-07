@@ -259,8 +259,8 @@ public class SaleController {
         String saleId = cancelSaleDto.saleId();
         String clientId = cancelSaleDto.clientId();
 
-        iSaleService.cancelSale(saleId, clientId);
+        String response = iSaleService.cancelSale(saleId, clientId);
 
-        return ResponseEntity.status(HttpStatus.OK).body(new SaleCanceledDto(""));
+        return ResponseEntity.status(HttpStatus.OK).body(new SaleCanceledDto(response));
     }
 }
