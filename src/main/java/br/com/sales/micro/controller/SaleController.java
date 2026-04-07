@@ -5,6 +5,7 @@ import br.com.sales.micro.domain.Sale;
 import br.com.sales.micro.dto.request.CancelSaleDto;
 import br.com.sales.micro.dto.request.MakeSaleDto;
 import br.com.sales.micro.dto.request.ProductBasicInfoDto;
+import br.com.sales.micro.dto.response.OperationHttpStatusCodeDto;
 import br.com.sales.micro.dto.response.SaleCanceledDto;
 import br.com.sales.micro.dto.response.ReturnSaleDto;
 import br.com.sales.micro.dto.response.SaleInfoDto;
@@ -259,8 +260,8 @@ public class SaleController {
         String saleId = cancelSaleDto.saleId();
         String clientId = cancelSaleDto.clientId();
 
-        String response = iSaleService.cancelSale(saleId, clientId);
+        OperationHttpStatusCodeDto response = iSaleService.cancelSale(saleId, clientId);
 
-        return ResponseEntity.status(HttpStatus.OK).body(new SaleCanceledDto(response));
+        return ResponseEntity.status(response.statusCode()).body(new SaleCanceledDto(response.message()));
     }
 }

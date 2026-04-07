@@ -2,6 +2,7 @@ package br.com.sales.micro.service.imp;
 
 import br.com.sales.micro.domain.*;
 import br.com.sales.micro.dto.request.ProductBarCodeListDto;
+import br.com.sales.micro.dto.response.OperationHttpStatusCodeDto;
 import br.com.sales.micro.dto.response.payment.PaymentDto;
 import br.com.sales.micro.event.dto.SetSaleEventDto;
 import br.com.sales.micro.dto.response.ClientDto;
@@ -15,6 +16,7 @@ import br.com.sales.micro.exception.product.ErrorRetrievingProductDataException;
 import br.com.sales.micro.exception.product.ProductDataIncompatibleException;
 import br.com.sales.micro.exception.product.ProductNotFoundException;
 import br.com.sales.micro.respository.ICanceledRepository;
+import br.com.sales.micro.respository.ICompletedRepository;
 import br.com.sales.micro.respository.ISaleRepository;
 import br.com.sales.micro.service.IClientClient;
 import br.com.sales.micro.service.IPaymentClient;
@@ -22,6 +24,7 @@ import br.com.sales.micro.service.ISaleService;
 import br.com.sales.micro.service.IProductClient;
 import feign.FeignException;
 import feign.RetryableException;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -38,6 +41,7 @@ public class SaleService implements ISaleService {
     private final SaleEventProducer saleEventProducer;
     private final ICanceledRepository iCanceledRepository;
     private final IPaymentClient iPaymentClient;
+    private final ICompletedRepository iCompletedRepository;
 
     public SaleService(
             ISaleRepository iSaleRepository,
@@ -45,7 +49,8 @@ public class SaleService implements ISaleService {
             IClientClient IClientClient,
             SaleEventProducer saleEventProducer,
             ICanceledRepository iCanceledRepository,
-            IPaymentClient iPaymentClient
+            IPaymentClient iPaymentClient,
+            ICompletedRepository iCompletedRepository
     ) {
         this.iSaleRepository = iSaleRepository;
         this.IProductClient = IProductClient;
@@ -53,6 +58,7 @@ public class SaleService implements ISaleService {
         this.saleEventProducer = saleEventProducer;
         this.iCanceledRepository = iCanceledRepository;
         this.iPaymentClient = iPaymentClient;
+        this.iCompletedRepository = iCompletedRepository;
     }
 
     @Override
@@ -144,43 +150,30 @@ public class SaleService implements ISaleService {
     }
 
     @Override
-    public String cancelSale(String saleId, String clientId) {
-        Sale sale = iSaleRepository.findById(saleId).orElseThrow(SaleNotFoundException::new);
-        Status saleStatus = sale.getStatus();
+    public OperationHttpStatusCodeDto cancelSale(String saleId, String clientId) {
+        Optional<Sale> saleResponse = iSaleRepository.findById(saleId);
+
+        if (!saleResponse.isPresent()) {
+            return this.cancelCompletedSale(saleId, clientId);
+        }
+
+        Sale sale = saleResponse.get();
         String saleClientId = sale.getClient().getId();
-        String response = "Sale canceled successfully!";
 
         if (!saleClientId.equals(clientId)) throw new PermissionDeniedException();
 
-        if (saleStatus.equals(Status.DELIVERED))
-            throw new PermissionDeniedException("It is no longer possible to cancel the sale!");
+        iSaleRepository.deleteById(saleId);
 
-        if (saleStatus.equals(Status.CANCELED)) throw new SaleAlreadyCancelledException();
+        Canceled canceled = Canceled.builder()
+                .status(Status.CANCELED)
+                .date(sale.getDate())
+                .totalValue(sale.getTotalValue())
+                .client(sale.getClient())
+                .items(sale.getItems())
+                .created_at(LocalDateTime.now())
+                .build();
 
-        if (saleStatus.equals(Status.CREATED) || saleStatus.equals(Status.PENDING_PAYMENT)) {
-            iSaleRepository.deleteById(saleId);
-
-            Canceled canceled = Canceled.builder()
-                    .status(Status.CANCELED)
-                    .date(sale.getDate())
-                    .totalValue(sale.getTotalValue())
-                    .client(sale.getClient())
-                    .items(sale.getItems())
-                    .created_at(LocalDateTime.now())
-                    .build();
-
-            iCanceledRepository.save(canceled);
-        } else { // PAID, SHIPPEND
-            PaymentDto payment = iPaymentClient.getPaymentInfo(saleId);
-            Instant dateApproved = payment.payment().payment().dateApproved();
-            boolean mustOfTwoHoursOld = Duration
-                    .between(dateApproved, Instant.now())
-                    .abs()
-                    .compareTo(Duration.ofHours(2)) >= 0;
-
-            if (mustOfTwoHoursOld) throw new PermissionDeniedException("Cancellation is no longer possible!");
-            response = "The sale cancellation is being processed!";
-        }
+        iCanceledRepository.save(canceled);
 
         saleEventProducer.setSaleEvent(new SetSaleEventDto(
                 saleId,
@@ -189,6 +182,31 @@ public class SaleService implements ISaleService {
                 sale.getItems()
         ));
 
-        return response;
+        return new OperationHttpStatusCodeDto("Sale canceled successfully!", HttpStatus.OK);
+    }
+
+    public OperationHttpStatusCodeDto cancelCompletedSale(String saleId, String clientId) {
+        Completed sale = iCompletedRepository.findBySaleId(saleId).orElseThrow(SaleNotFoundException::new);
+        String saleClientId = sale.getSale().getClient().getId();
+
+        if (!saleClientId.equals(clientId)) throw new PermissionDeniedException();
+
+        PaymentDto payment = iPaymentClient.getPaymentInfo(saleId);
+        Instant dateApproved = payment.payment().payment().dateApproved();
+        boolean mustOfTwoHoursOld = Duration
+                .between(dateApproved, Instant.now())
+                .abs()
+                .compareTo(Duration.ofHours(2)) >= 0;
+
+        if (mustOfTwoHoursOld) throw new PermissionDeniedException("Cancellation is no longer possible!");
+
+        saleEventProducer.setSaleEvent(new SetSaleEventDto(
+                saleId,
+                clientId,
+                Status.CANCELED,
+                sale.getSale().getItems()
+        ));
+
+        return new OperationHttpStatusCodeDto("The sale cancellation is being processed!", HttpStatus.ACCEPTED);
     }
 }

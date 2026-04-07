@@ -3,6 +3,7 @@ package br.com.sales.micro.service;
 import br.com.sales.micro.domain.Item;
 import br.com.sales.micro.domain.Sale;
 import br.com.sales.micro.dto.response.ClientDto;
+import br.com.sales.micro.dto.response.OperationHttpStatusCodeDto;
 import br.com.sales.micro.dto.response.ProductDto;
 
 import java.util.List;
@@ -12,5 +13,5 @@ public interface ISaleService {
     public ClientDto getClientData(String id);
     public Sale makeSale(String clientId, String clientCpf, Double totalValue, List<Item> products);
     public Sale getSaleInfo(String id);
-    public String cancelSale(String saleId, String clientId);
+    public OperationHttpStatusCodeDto cancelSale(String saleId, String clientId);
 }
