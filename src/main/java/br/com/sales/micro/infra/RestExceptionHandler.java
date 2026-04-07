@@ -96,8 +96,11 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(defaultErrorResponse);
     }
 
-    @ExceptionHandler(InsufficientProductsException.class)
-    private ResponseEntity<DefaultErrorResponse> insufficientProductsHandler(InsufficientProductsException exception) {
+    @ExceptionHandler({
+            InsufficientProductsException.class,
+            SaleAlreadyCancelledException.class
+    })
+    private ResponseEntity<DefaultErrorResponse> conflictHandler(RuntimeException exception) {
         DefaultErrorResponse defaultErrorResponse = new DefaultErrorResponse(HttpStatus.CONFLICT, exception.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(defaultErrorResponse);
     }
