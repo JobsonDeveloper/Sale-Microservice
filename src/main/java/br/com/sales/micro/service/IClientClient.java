@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
         name = "client-microservice",
         url = "${client.micro.url}"
 )
-public interface ClientClient {
+public interface IClientClient {
 
     @GetMapping("/api/client/{id}/info")
     ClientDto getClientData(
