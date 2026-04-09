@@ -20,11 +20,7 @@ import java.util.List;
 public class Canceled {
     @Id
     private String id;
-    private Status status;
-    private LocalDateTime date;
-    private Double totalValue;
-    private Client client;
-    private List<Item> items;
+    private Sale sale;
 
     @CreatedDate
     private LocalDateTime created_at;
