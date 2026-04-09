@@ -164,12 +164,9 @@ public class SaleService implements ISaleService {
 
         iSaleRepository.deleteById(saleId);
 
+        sale.setStatus(Status.CANCELED);
         Canceled canceled = Canceled.builder()
-                .status(Status.CANCELED)
-                .date(sale.getDate())
-                .totalValue(sale.getTotalValue())
-                .client(sale.getClient())
-                .items(sale.getItems())
+                .sale(sale)
                 .created_at(LocalDateTime.now())
                 .build();
 
@@ -208,7 +205,7 @@ public class SaleService implements ISaleService {
 
         Canceled canceled = iCanceledRepository.save(canceledSale);
 
-        if(canceled.getId() == null) throw new ErrorCancelingSaleException();
+        if (canceled.getId() == null) throw new ErrorCancelingSaleException();
 
         iCompletedRepository.deleteById(sale.getId());
 
