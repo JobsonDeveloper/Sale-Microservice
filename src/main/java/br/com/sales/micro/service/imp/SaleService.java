@@ -200,6 +200,18 @@ public class SaleService implements ISaleService {
 
         if (mustOfTwoHoursOld) throw new PermissionDeniedException("Cancellation is no longer possible!");
 
+        sale.getSale().setStatus(Status.CANCELED);
+        Canceled canceledSale = Canceled.builder()
+                .sale(sale.getSale())
+                .created_at(LocalDateTime.now())
+                .build();
+
+        Canceled canceled = iCanceledRepository.save(canceledSale);
+
+        if(canceled.getId() == null) throw new ErrorCancelingSaleException();
+
+        iCompletedRepository.deleteById(sale.getId());
+
         saleEventProducer.setSaleEvent(new SetSaleEventDto(
                 saleId,
                 clientId,
