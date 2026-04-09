@@ -5,12 +5,12 @@ import br.com.sales.micro.domain.Sale;
 import br.com.sales.micro.dto.request.CancelSaleDto;
 import br.com.sales.micro.dto.request.MakeSaleDto;
 import br.com.sales.micro.dto.request.ProductBasicInfoDto;
+import br.com.sales.micro.dto.response.OperationHttpStatusCodeDto;
 import br.com.sales.micro.dto.response.SaleCanceledDto;
 import br.com.sales.micro.dto.response.ReturnSaleDto;
 import br.com.sales.micro.dto.response.SaleInfoDto;
 import br.com.sales.micro.exception.InconsistentValueException;
 import br.com.sales.micro.exception.product.InsufficientProductsException;
-import br.com.sales.micro.service.ICanceledService;
 import br.com.sales.micro.service.ISaleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -31,14 +31,11 @@ import java.util.List;
 @Tag(name = "Sale", description = "Sale operations")
 public class SaleController {
     private final ISaleService iSaleService;
-    private final ICanceledService iCanceledService;
 
     public SaleController(
-            ISaleService iSaleService,
-            ICanceledService iCanceledService
+            ISaleService iSaleService
     ) {
         this.iSaleService = iSaleService;
-        this.iCanceledService = iCanceledService;
     }
 
     @PostMapping("/api/sale")
@@ -263,8 +260,8 @@ public class SaleController {
         String saleId = cancelSaleDto.saleId();
         String clientId = cancelSaleDto.clientId();
 
-        iCanceledService.cancelSale(saleId, clientId);
+        OperationHttpStatusCodeDto response = iSaleService.cancelSale(saleId, clientId);
 
-        return ResponseEntity.status(HttpStatus.OK).body(new SaleCanceledDto("Sale canceled successfully!"));
+        return ResponseEntity.status(response.statusCode()).body(new SaleCanceledDto(response.message()));
     }
 }

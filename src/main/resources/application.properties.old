@@ -5,6 +5,7 @@ spring.application.zone=America/Recife
 # Other microservices port
 client.micro.port=
 product.micro.port=
+payment.micro.url=
 
 #Database
 MONGO_HOST=
@@ -15,12 +16,12 @@ MONGO_PASS=
 spring.data.mongodb.uri=mongodb://${MONGO_USER}:${MONGO_PASS}@${MONGO_HOST}:${MONGO_PORT}/${MONGO_DB}?authSource=admin
 
 #Apache Kafka
-spring.kafka.bootstrap-servers=kafka:9092
+spring.kafka.bootstrap-servers=
 spring.kafka.producer.key-serializer=org.apache.kafka.common.serialization.StringSerializer
 spring.kafka.producer.value-serializer=org.springframework.kafka.support.serializer.JsonSerializer
 spring.kafka.producer.properties.spring.json.add.type.headers=false
 
-spring.kafka.consumer.bootstrap-servers=kafka:9092
+spring.kafka.consumer.bootstrap-servers=
 spring.kafka.consumer.group-id=sale-group
 
 spring.kafka.consumer.key-deserializer=org.springframework.kafka.support.serializer.ErrorHandlingDeserializer

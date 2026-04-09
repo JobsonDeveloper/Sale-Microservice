@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
         name = "product-microservice",
         url = "${product.micro.url}"
 )
-public interface ProductClient {
+public interface IProductClient {
 
     @PostMapping("/api/product/data")
     ProductDto getProductsData(
