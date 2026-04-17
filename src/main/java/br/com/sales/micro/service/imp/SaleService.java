@@ -121,41 +121,26 @@ public class SaleService implements ISaleService {
                 .build();
 
         Sale newSale = iSaleRepository.save(sale);
-
-        if (newSale.getId() == null) {
-            throw new ErrorCreatingTheSaleException();
-        }
-
-        SetSaleEventDto event = new SetSaleEventDto(
+        saleEventProducer.setSaleEvent(new SetSaleEventDto(
                 newSale.getId(),
                 newSale.getClient().getId(),
                 newSale.getStatus(),
                 newSale.getItems()
-        );
-
-        saleEventProducer.setSaleEvent(event);
+        ));
 
         return newSale;
     }
 
     @Override
     public Sale getSaleInfo(String id) {
-        Optional<Sale> sale = iSaleRepository.findById(id);
-
-        if (!sale.isPresent()) {
-            throw new SaleNotFoundException();
-        }
-
-        return sale.get();
+        return iSaleRepository.findById(id).orElseThrow(SaleNotFoundException::new);
     }
 
     @Override
     public OperationHttpStatusCodeDto cancelSale(String saleId, String clientId) {
         Optional<Sale> saleResponse = iSaleRepository.findById(saleId);
 
-        if (!saleResponse.isPresent()) {
-            return this.cancelCompletedSale(saleId, clientId);
-        }
+        if (saleResponse.isEmpty()) return this.cancelCompletedSale(saleId, clientId);
 
         Sale sale = saleResponse.get();
         String saleClientId = sale.getClient().getId();
@@ -171,7 +156,6 @@ public class SaleService implements ISaleService {
                 .build();
 
         iCanceledRepository.save(canceled);
-
         saleEventProducer.setSaleEvent(new SetSaleEventDto(
                 saleId,
                 clientId,
@@ -195,7 +179,7 @@ public class SaleService implements ISaleService {
                 .abs()
                 .compareTo(Duration.ofHours(2)) >= 0;
 
-        if (mustOfTwoHoursOld) throw new PermissionDeniedException("Cancellation is no longer possible!");
+        if (mustOfTwoHoursOld) throw new PermissionDeniedException("The cancellation is no longer possible!");
 
         sale.getSale().setStatus(Status.CANCELED);
         Canceled canceledSale = Canceled.builder()
@@ -203,12 +187,8 @@ public class SaleService implements ISaleService {
                 .created_at(LocalDateTime.now())
                 .build();
 
-        Canceled canceled = iCanceledRepository.save(canceledSale);
-
-        if (canceled.getId() == null) throw new ErrorCancelingSaleException();
-
+        iCanceledRepository.save(canceledSale);
         iCompletedRepository.deleteById(sale.getId());
-
         saleEventProducer.setSaleEvent(new SetSaleEventDto(
                 saleId,
                 clientId,

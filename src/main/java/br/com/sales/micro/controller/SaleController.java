@@ -141,9 +141,7 @@ public class SaleController {
                 Integer desiredProductQuantity = buyProduct.productQuantity();
 
                 if (storedProductCode.equals(desiredProductCode)) {
-                    if ((storedProductQuantity - desiredProductQuantity) < 0) {
-                        throw new InsufficientProductsException();
-                    }
+                    if ((storedProductQuantity - desiredProductQuantity) < 0) throw new InsufficientProductsException();
 
                     totalValue += storeProduct.getValue() * desiredProductQuantity;
                     storeProduct.setQuantity(desiredProductQuantity);
@@ -151,11 +149,10 @@ public class SaleController {
             }
         }
 
-        if (!productBarCodeListDto.totalValue().equals(totalValue)) {
-            throw new InconsistentValueException();
-        }
+        if (!productBarCodeListDto.totalValue().equals(totalValue)) throw new InconsistentValueException();
 
         Sale newSale = iSaleService.makeSale(clientId, clientCpf, totalValue, productsData);
+
         return ResponseEntity.status(HttpStatus.CREATED).body(new ReturnSaleDto("Sale started successfully!", newSale));
     }
 

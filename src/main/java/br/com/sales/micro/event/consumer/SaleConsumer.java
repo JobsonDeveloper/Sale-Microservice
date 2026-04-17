@@ -4,17 +4,13 @@ import br.com.sales.micro.domain.Completed;
 import br.com.sales.micro.domain.Sale;
 import br.com.sales.micro.domain.Status;
 import br.com.sales.micro.event.dto.PaymentPendingEventDto;
-import br.com.sales.micro.exception.ErrorDeletingSaleException;
-import br.com.sales.micro.exception.ErrorTransferringSalesDataToCompleted;
 import br.com.sales.micro.exception.SaleNotFoundException;
 import br.com.sales.micro.respository.ICompletedRepository;
 import br.com.sales.micro.respository.ISaleRepository;
-import org.springframework.cglib.core.Local;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
 
 @Service
 public class SaleConsumer {
@@ -26,42 +22,36 @@ public class SaleConsumer {
         this.iCompletedRepository = iCompletedRepository;
     }
 
-    @KafkaListener(topics = "payment", groupId = "sale-group")
-    public void salePaymentProcesses(PaymentPendingEventDto event) {
+    @KafkaListener(topics = "payment", groupId = "${spring.kafka.consumer.group-id}")
+    public void paymentConsumer(PaymentPendingEventDto event) {
         Status status = event.status();
         String saleId = event.saleId();
 
-        if (status.equals(Status.PENDING_PAYMENT)) {
+        if (status.equals(Status.PENDING_PAYMENT)) this.changeSaleStatus(saleId, status);
+        if (status.equals(Status.PAID)) this.markAsCompleted(saleId);
+    }
 
-            Optional<Sale> sale = iSaleRepository.findById(saleId);
+    public void changeSaleStatus(String saleId, Status status) {
+        Sale sale = iSaleRepository.findById(saleId).orElseThrow(SaleNotFoundException::new);
 
-            if (!sale.isPresent()) throw new SaleNotFoundException();
-
-            if (!status.equals(sale.get().getStatus())) {
-                sale.get().setStatus(status);
-                sale.get().setUpdated_at(LocalDateTime.now());
-                iSaleRepository.save(sale.get());
-            }
+        if (!status.equals(sale.getStatus())) {
+            sale.setStatus(status);
+            sale.setUpdated_at(LocalDateTime.now());
+            iSaleRepository.save(sale);
         }
-        if (status.equals(Status.PAID)) {
-            Optional<Sale> sale = iSaleRepository.findById(saleId);
+    }
 
-            if (!sale.isPresent()) throw new SaleNotFoundException();
+    public void markAsCompleted(String saleId) {
+        Sale sale = iSaleRepository.findById(saleId).orElseThrow(SaleNotFoundException::new);
 
-            iSaleRepository.deleteById(sale.get().getId());
-            Optional<Sale> deletedSale = iSaleRepository.findById(saleId);
+        iSaleRepository.deleteById(sale.getId());
 
-            if(deletedSale.isPresent()) throw new ErrorDeletingSaleException();
+        sale.setStatus(Status.PAID);
+        Completed completedSale = Completed.builder()
+                .sale(sale)
+                .created_at(LocalDateTime.now())
+                .build();
 
-            sale.get().setStatus(Status.PAID);
-            Completed completedSale = Completed.builder()
-                    .sale(sale.get())
-                    .created_at(LocalDateTime.now())
-                    .build();
-
-            Completed completed = iCompletedRepository.save(completedSale);
-
-            if(completed.getId() == null) throw new ErrorTransferringSalesDataToCompleted();
-        }
+        iCompletedRepository.save(completedSale);
     }
 }
