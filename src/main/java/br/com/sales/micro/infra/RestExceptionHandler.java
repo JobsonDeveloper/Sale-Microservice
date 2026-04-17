@@ -1,6 +1,5 @@
 package br.com.sales.micro.infra;
 
-import br.com.sales.micro.dto.response.PurchaseNotPaidException;
 import br.com.sales.micro.exception.*;
 import br.com.sales.micro.exception.client.ClientDataIncompatibleException;
 import br.com.sales.micro.exception.client.ClientNotFoundException;
@@ -9,6 +8,9 @@ import br.com.sales.micro.exception.product.ErrorRetrievingProductDataException;
 import br.com.sales.micro.exception.product.InsufficientProductsException;
 import br.com.sales.micro.exception.product.ProductDataIncompatibleException;
 import br.com.sales.micro.exception.product.ProductNotFoundException;
+import com.mongodb.DuplicateKeyException;
+import com.mongodb.MongoException;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -54,96 +56,91 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         return ResponseEntity.badRequest().body(response);
     }
 
-    @ExceptionHandler(InconsistentValueException.class)
-    private ResponseEntity<DefaultErrorResponse> inconsistentValueHandler(InconsistentValueException exception) {
-        DefaultErrorResponse defaultErrorResponse = new DefaultErrorResponse(HttpStatus.CONFLICT, exception.getMessage());
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(defaultErrorResponse);
-    }
-
-    @ExceptionHandler({ErrorCreatingTheSaleException.class, ErrorDeletingSaleException.class, ErrorTransferringSalesDataToCompleted.class})
-    private ResponseEntity<DefaultErrorResponse> internalErrorHandler(RuntimeException exception) {
-        DefaultErrorResponse defaultErrorResponse = new DefaultErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(defaultErrorResponse);
-    }
-
-    @ExceptionHandler(ServiceUnavailableException.class)
-    private ResponseEntity<DefaultErrorResponse> serviceUnavailableHandler(ServiceUnavailableException exception) {
-        DefaultErrorResponse defaultErrorResponse = new DefaultErrorResponse(HttpStatus.BAD_GATEWAY, exception.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(defaultErrorResponse);
-    }
-
-    @ExceptionHandler(SaleNotFoundException.class)
-    private ResponseEntity<DefaultErrorResponse> saleNotFoundHandler(SaleNotFoundException exception) {
-        DefaultErrorResponse defaultErrorResponse = new DefaultErrorResponse(HttpStatus.NOT_FOUND, exception.getMessage());
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(defaultErrorResponse);
-    }
-
-    @ExceptionHandler(ProductNotFoundException.class)
-    private ResponseEntity<DefaultErrorResponse> productNotFoundHandler(ProductNotFoundException exception) {
-        DefaultErrorResponse defaultErrorResponse = new DefaultErrorResponse(HttpStatus.NOT_FOUND, exception.getMessage());
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(defaultErrorResponse);
-    }
-
-    @ExceptionHandler(ProductDataIncompatibleException.class)
-    private ResponseEntity<DefaultErrorResponse> productDataIncompatibleDataHandler(ProductDataIncompatibleException exception) {
-        DefaultErrorResponse defaultErrorResponse = new DefaultErrorResponse(HttpStatus.BAD_REQUEST, exception.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(defaultErrorResponse);
-    }
-
-    @ExceptionHandler(ErrorRetrievingProductDataException.class)
-    private ResponseEntity<DefaultErrorResponse> errorRetrievingProductDataHandler(ErrorRetrievingProductDataException exception) {
-        DefaultErrorResponse defaultErrorResponse = new DefaultErrorResponse(HttpStatus.BAD_GATEWAY, exception.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(defaultErrorResponse);
+    private ResponseEntity<DefaultErrorResponse> responseConstructor(HttpStatus status, String message) {
+        return ResponseEntity.status(status)
+                .body(new DefaultErrorResponse(status, message));
     }
 
     @ExceptionHandler({
-            InsufficientProductsException.class,
-            SaleAlreadyCancelledException.class
+            InconsistentValueException.class,
+            InsufficientProductsException.class
     })
     private ResponseEntity<DefaultErrorResponse> conflictHandler(RuntimeException exception) {
-        DefaultErrorResponse defaultErrorResponse = new DefaultErrorResponse(HttpStatus.CONFLICT, exception.getMessage());
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(defaultErrorResponse);
+        return this.responseConstructor(
+                HttpStatus.CONFLICT,
+                exception.getMessage()
+        );
     }
 
-    @ExceptionHandler(ErrorRetrievingClientDataException.class)
-    private ResponseEntity<DefaultErrorResponse> errorRetrievingClientDataHandler(ErrorRetrievingClientDataException exception) {
-        DefaultErrorResponse defaultErrorResponse = new DefaultErrorResponse(HttpStatus.BAD_GATEWAY, exception.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(defaultErrorResponse);
+    @ExceptionHandler({
+            ServiceUnavailableException.class,
+            ErrorRetrievingProductDataException.class,
+            ErrorRetrievingClientDataException.class
+    })
+    private ResponseEntity<DefaultErrorResponse> gatewayErrorHandler(RuntimeException exception) {
+        return this.responseConstructor(
+                HttpStatus.BAD_GATEWAY,
+                exception.getMessage()
+        );
     }
 
-    @ExceptionHandler(ClientDataIncompatibleException.class)
-    private ResponseEntity<DefaultErrorResponse> clientDataIncompatibleDataHandler(ClientDataIncompatibleException exception) {
-        DefaultErrorResponse defaultErrorResponse = new DefaultErrorResponse(HttpStatus.BAD_REQUEST, exception.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(defaultErrorResponse);
+    @ExceptionHandler({
+            SaleNotFoundException.class,
+            ProductNotFoundException.class,
+            ClientNotFoundException.class
+    })
+    private ResponseEntity<DefaultErrorResponse> recordNotFoundHandler(RuntimeException exception) {
+        return this.responseConstructor(
+                HttpStatus.NOT_FOUND,
+                exception.getMessage()
+        );
     }
 
-    @ExceptionHandler(ClientNotFoundException.class)
-    private ResponseEntity<DefaultErrorResponse> clientNotFoundHandler(ClientNotFoundException exception) {
-        DefaultErrorResponse defaultErrorResponse = new DefaultErrorResponse(HttpStatus.NOT_FOUND, exception.getMessage());
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(defaultErrorResponse);
-    }
-
-    @ExceptionHandler(ErrorMarkingTheSaleAsCompletedException.class)
-    private ResponseEntity<DefaultErrorResponse> errorMarkingTheSaleAsCompletedHandler(ErrorMarkingTheSaleAsCompletedException exception) {
-        DefaultErrorResponse defaultErrorResponse = new DefaultErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(defaultErrorResponse);
-    }
-
-    @ExceptionHandler(PurchaseNotPaidException.class)
-    private ResponseEntity<DefaultErrorResponse> purchaseNotPaidHandler(PurchaseNotPaidException exception) {
-        DefaultErrorResponse defaultErrorResponse = new DefaultErrorResponse(HttpStatus.CONFLICT, exception.getMessage());
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(defaultErrorResponse);
+    @ExceptionHandler({
+            ProductDataIncompatibleException.class,
+            ClientDataIncompatibleException.class
+    })
+    private ResponseEntity<DefaultErrorResponse> errorRequestingDataHandler(RuntimeException exception) {
+        return this.responseConstructor(
+                HttpStatus.BAD_REQUEST,
+                exception.getMessage()
+        );
     }
 
     @ExceptionHandler(PermissionDeniedException.class)
-    private ResponseEntity<DefaultErrorResponse> permissionDeniedHandler(PermissionDeniedException exception) {
-        DefaultErrorResponse defaultErrorResponse = new DefaultErrorResponse(HttpStatus.UNAUTHORIZED, exception.getMessage());
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(defaultErrorResponse);
+    private ResponseEntity<DefaultErrorResponse> permissionDeniedHandler(RuntimeException exception) {
+        return this.responseConstructor(
+                HttpStatus.UNAUTHORIZED,
+                exception.getMessage()
+        );
     }
 
-    @ExceptionHandler(ErrorCancelingSaleException.class)
-    private ResponseEntity<DefaultErrorResponse> errorCancelingSaleHandler(ErrorCancelingSaleException exception) {
-        DefaultErrorResponse defaultErrorResponse = new DefaultErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(defaultErrorResponse);
+    //    ----  System errors  ----
+
+    @ExceptionHandler(DuplicateKeyException.class)
+    private ResponseEntity<DefaultErrorResponse> systemDuplicityOfDataHandler(RuntimeException exception) {
+        return this.responseConstructor(
+                HttpStatus.CONFLICT,
+                "This record has already been registered!"
+        );
+    }
+
+    @ExceptionHandler({
+            MongoException.class,
+            DataAccessException.class
+    })
+    private ResponseEntity<DefaultErrorResponse> systemDatabaseAccessErrorHandler(RuntimeException exception) {
+        return this.responseConstructor(
+                HttpStatus.SERVICE_UNAVAILABLE,
+                "Error connecting to the database!"
+        );
+    }
+
+    @ExceptionHandler(Exception.class)
+    private ResponseEntity<DefaultErrorResponse> unmappedErrorsHandler(Exception exception) {
+        return this.responseConstructor(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "Unexpected internal error!"
+        );
     }
 }
