@@ -9,6 +9,8 @@ import br.com.sales.micro.dto.response.OperationHttpStatusCodeDto;
 import br.com.sales.micro.dto.response.SaleCanceledDto;
 import br.com.sales.micro.dto.response.ReturnSaleDto;
 import br.com.sales.micro.dto.response.SaleInfoDto;
+import br.com.sales.micro.dto.swagger.DefaultErrorResponseDto;
+import br.com.sales.micro.dto.swagger.validation.fields.FieldsErrorDto;
 import br.com.sales.micro.exception.InconsistentValueException;
 import br.com.sales.micro.exception.product.InsufficientProductsException;
 import br.com.sales.micro.service.ISaleService;
@@ -46,7 +48,7 @@ public class SaleController {
             responses = {
                     @ApiResponse(
                             responseCode = "201",
-                            description = "Sale started successfully!",
+                            description = "Sale started successfully",
                             content = @Content(
                                     mediaType = "application/json",
                                     schema = @Schema(implementation = ReturnSaleDto.class)
@@ -54,66 +56,50 @@ public class SaleController {
                     ),
                     @ApiResponse(
                             responseCode = "400",
-                            description = "Incompatible data!",
+                            description = "Incompatible data",
                             content = @Content(
                                     mediaType = "application/json",
-                                    schema = @Schema(
-                                            example = "{ \"error\": \"Validation failed\", \"errors\": \"[...]\" }"
-                                    )
+                                    schema = @Schema(implementation = FieldsErrorDto.class)
                             )
                     ),
                     @ApiResponse(
                             responseCode = "404",
-                            description = "Product or Client not found!",
+                            description = "Product or Client not found",
                             content = @Content(
                                     mediaType = "application/json",
-                                    examples = {
-                                            @ExampleObject(
-                                                    name = "Product not found!",
-                                                    value = "{ \"status\": \"NOT_FOUND\", \"message\": \"Product not found!\" }"
-                                            ),
-                                            @ExampleObject(
-                                                    name = "Client not found!",
-                                                    value = "{ \"status\": \"NOT_FOUND\", \"message\": \"Client not found!\" }"
-                                            )
-                                    }
+                                    schema = @Schema(implementation = DefaultErrorResponseDto.class)
                             )
                     ),
                     @ApiResponse(
                             responseCode = "409",
-                            description = "The amount to be paid is inconsistent!",
+                            description = "The amount to be paid is inconsistent",
                             content = @Content(
                                     mediaType = "application/json",
-                                    schema = @Schema(
-                                            example = "{ \"status\": \"CONFLICT\", \"message\": \"The amount to be paid is inconsistent!\" }"
-                                    )
+                                    schema = @Schema(implementation = DefaultErrorResponseDto.class)
                             )
                     ),
                     @ApiResponse(
                             responseCode = "500",
-                            description = "Error creating the sale!",
+                            description = "Internal Server Error",
                             content = @Content(
                                     mediaType = "application/json",
-                                    schema = @Schema(
-                                            example = "{ \"status\": \"INTERNAL_SERVER_ERROR\", \"message\": \"Error creating the sale!\" }"
-                                    )
+                                    schema = @Schema(implementation = DefaultErrorResponseDto.class)
                             )
                     ),
                     @ApiResponse(
                             responseCode = "502",
-                            description = "Product or Client microservice are unavailable",
+                            description = "Gateway error",
                             content = @Content(
                                     mediaType = "application/json",
-                                    examples = {
-                                            @ExampleObject(
-                                                    name = "Product microservice unavailable!",
-                                                    value = "{ \"status\": \"BAD_GATEWAY\", \"message\": \"Service 'Product Microservice' is unavailable!\" }"
-                                            ),
-                                            @ExampleObject(
-                                                    name = "Client microservice unavailable",
-                                                    value = "{ \"status\": \"BAD_GATEWAY\", \"message\": \"Service 'Client Microservice' is unavailable!\" }"
-                                            )
-                                    }
+                                    schema = @Schema(implementation = DefaultErrorResponseDto.class)
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "503",
+                            description = "Service Unavailable",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = DefaultErrorResponseDto.class)
                             )
                     )
             }
@@ -164,7 +150,7 @@ public class SaleController {
             responses = {
                     @ApiResponse(
                             responseCode = "200",
-                            description = "Sale info returned successfully!",
+                            description = "Sale info returned successfully",
                             content = @Content(
                                     mediaType = "application/json",
                                     schema = @Schema(implementation = SaleInfoDto.class)
@@ -172,12 +158,26 @@ public class SaleController {
                     ),
                     @ApiResponse(
                             responseCode = "404",
-                            description = "Sale not found!",
+                            description = "Sale not found",
                             content = @Content(
                                     mediaType = "application/json",
-                                    schema = @Schema(
-                                            example = "{ \"status\": \"NOT_FOUND\", \"message\": \"Sale not found!\" }"
-                                    )
+                                    schema = @Schema(implementation = DefaultErrorResponseDto.class)
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "500",
+                            description = "Internal Server Error",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = DefaultErrorResponseDto.class)
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "503",
+                            description = "Service Unavailable",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = DefaultErrorResponseDto.class)
                             )
                     )
             }
@@ -193,12 +193,12 @@ public class SaleController {
     @PostMapping("/api/sale/cancel")
     @Operation(
             summary = "Cancel a sale",
-            description = "Route to cancel a sale",
+            description = "Cancel a sale registered on the system",
             tags = {"Sale"},
             responses = {
                     @ApiResponse(
                             responseCode = "200",
-                            description = "Sale canceled successfully!",
+                            description = "Sale canceled successfully",
                             content = @Content(
                                     mediaType = "application/json",
                                     schema = @Schema(implementation = SaleCanceledDto.class)
@@ -206,49 +206,42 @@ public class SaleController {
                     ),
                     @ApiResponse(
                             responseCode = "400",
-                            description = "Incompatible data!",
+                            description = "Incompatible data",
                             content = @Content(
                                     mediaType = "application/json",
-                                    schema = @Schema(
-                                            example = "{ \"error\": \"Validation failed\", \"errors\": \"[...]\" }"
-                                    )
+                                    schema = @Schema(implementation = FieldsErrorDto.class)
                             )
                     ),
                     @ApiResponse(
                             responseCode = "401",
-                            description = "Permission denied! Sale not linked to this user!",
+                            description = "Permission denied! Sale not linked to this user",
                             content = @Content(
                                     mediaType = "application/json",
-                                    examples = {
-                                            @ExampleObject(
-                                                    name = "Incompatible user",
-                                                    value = "{ \"status\": \"UNAUTHORIZED\", \"message\": \"Permission denied! Sale not linked to this user!\" }"
-                                            ),
-                                            @ExampleObject(
-                                                    name = "Incompatible sale status",
-                                                    value = "It is no longer possible to cancel the sale!"
-                                            )
-                                    }
+                                    schema = @Schema(implementation = DefaultErrorResponseDto.class)
                             )
                     ),
                     @ApiResponse(
                             responseCode = "404",
-                            description = "Sale not found!",
+                            description = "Sale not found",
                             content = @Content(
                                     mediaType = "application/json",
-                                    schema = @Schema(
-                                            example = "{ \"status\": \"NOT_FOUND\", \"message\": \"Sale not found!\" }"
-                                    )
+                                    schema = @Schema(implementation = DefaultErrorResponseDto.class)
                             )
                     ),
                     @ApiResponse(
                             responseCode = "500",
-                            description = "It was not possible to cancel the sale!",
+                            description = "Internal Server Error",
                             content = @Content(
                                     mediaType = "application/json",
-                                    schema = @Schema(
-                                            example = "{ \"status\": \"INTERNAL_SERVER_ERROR\", \"message\": \"It was not possible to cancel the sale!\" }"
-                                    )
+                                    schema = @Schema(implementation = DefaultErrorResponseDto.class)
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "503",
+                            description = "Service Unavailable",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = DefaultErrorResponseDto.class)
                             )
                     )
             }
