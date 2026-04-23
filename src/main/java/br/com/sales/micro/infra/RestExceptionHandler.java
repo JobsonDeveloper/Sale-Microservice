@@ -44,7 +44,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
             WebRequest request
     ) {
         Map<String, Object> response = new HashMap<>();
-        response.put("error", "Validation failed");
+        response.put("error", "Inconsistent request fields");
 
         List<Map<String, String>> errors = exception.getBindingResult()
                 .getFieldErrors()
