@@ -3,7 +3,8 @@ package br.com.sales.micro.event.consumer;
 import br.com.sales.micro.domain.Completed;
 import br.com.sales.micro.domain.Sale;
 import br.com.sales.micro.domain.Status;
-import br.com.sales.micro.event.dto.PaymentPendingEventDto;
+import br.com.sales.micro.event.dto.DeliveryEventDto;
+import br.com.sales.micro.event.dto.PaymentEventDto;
 import br.com.sales.micro.exception.SaleNotFoundException;
 import br.com.sales.micro.respository.ICompletedRepository;
 import br.com.sales.micro.respository.ISaleRepository;
@@ -22,8 +23,28 @@ public class SaleConsumer {
         this.iCompletedRepository = iCompletedRepository;
     }
 
-    @KafkaListener(topics = "payment", groupId = "${spring.kafka.consumer.group-id}")
-    public void paymentConsumer(PaymentPendingEventDto event) {
+    @KafkaListener(
+            topics = "delivery",
+            groupId = "${spring.kafka.consumer.group-id}",
+            containerFactory = "deliveryKafkaListenerFactory"
+    )
+    public void deliveryConsumer(DeliveryEventDto event) {
+        Status status = event.status();
+        String saleId = event.saleId();
+
+        if(!status.equals(Status.DELIVERED)) return;
+
+        Completed completedSale = iCompletedRepository.findBySaleId(saleId).orElseThrow(SaleNotFoundException::new);
+        completedSale.getSale().setStatus(Status.DELIVERED);
+        iCompletedRepository.save(completedSale);
+    }
+
+    @KafkaListener(
+            topics = "payment",
+            groupId = "${spring.kafka.consumer.group-id}",
+            containerFactory = "paymentKafkaListenerFactory"
+    )
+    public void paymentConsumer(PaymentEventDto event) {
         Status status = event.status();
         String saleId = event.saleId();
 

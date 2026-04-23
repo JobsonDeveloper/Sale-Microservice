@@ -4,7 +4,7 @@ import br.com.sales.micro.domain.Status;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public record PaymentPendingEventDto(
+public record PaymentEventDto(
         String saleId,
         Status status
 ) {
