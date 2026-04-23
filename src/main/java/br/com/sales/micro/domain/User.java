@@ -7,7 +7,7 @@ import lombok.*;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class Client {
+public class User {
     private String id;
     private String cpf;
 }
