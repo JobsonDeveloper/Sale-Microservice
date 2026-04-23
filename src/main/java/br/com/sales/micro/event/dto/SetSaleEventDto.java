@@ -7,7 +7,7 @@ import java.util.List;
 
 public record SetSaleEventDto(
         String id,
-        String clientId,
+        String userId,
         Status status,
         List<Item> items
 ) {
