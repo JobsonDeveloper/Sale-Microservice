@@ -5,20 +5,20 @@ import br.com.sales.micro.dto.request.ProductBarCodeListDto;
 import br.com.sales.micro.dto.response.OperationHttpStatusCodeDto;
 import br.com.sales.micro.dto.response.payment.PaymentDto;
 import br.com.sales.micro.event.dto.SetSaleEventDto;
-import br.com.sales.micro.dto.response.ClientDto;
+import br.com.sales.micro.dto.response.UserDto;
 import br.com.sales.micro.dto.response.ProductDto;
 import br.com.sales.micro.event.producer.SaleEventProducer;
 import br.com.sales.micro.exception.*;
-import br.com.sales.micro.exception.client.ClientDataIncompatibleException;
-import br.com.sales.micro.exception.client.ClientNotFoundException;
-import br.com.sales.micro.exception.client.ErrorRetrievingClientDataException;
+import br.com.sales.micro.exception.user.IncompatibleUserDataException;
+import br.com.sales.micro.exception.user.UserNotFoundException;
+import br.com.sales.micro.exception.user.ErrorRetrievingUserDataException;
 import br.com.sales.micro.exception.product.ErrorRetrievingProductDataException;
 import br.com.sales.micro.exception.product.ProductDataIncompatibleException;
 import br.com.sales.micro.exception.product.ProductNotFoundException;
 import br.com.sales.micro.respository.ICanceledRepository;
 import br.com.sales.micro.respository.ICompletedRepository;
 import br.com.sales.micro.respository.ISaleRepository;
-import br.com.sales.micro.service.IClientClient;
+import br.com.sales.micro.service.IUserClient;
 import br.com.sales.micro.service.IPaymentClient;
 import br.com.sales.micro.service.ISaleService;
 import br.com.sales.micro.service.IProductClient;
@@ -37,7 +37,7 @@ import java.util.Optional;
 public class SaleService implements ISaleService {
     private final ISaleRepository iSaleRepository;
     private final IProductClient IProductClient;
-    private final IClientClient IClientClient;
+    private final IUserClient IUserClient;
     private final SaleEventProducer saleEventProducer;
     private final ICanceledRepository iCanceledRepository;
     private final IPaymentClient iPaymentClient;
@@ -46,7 +46,7 @@ public class SaleService implements ISaleService {
     public SaleService(
             ISaleRepository iSaleRepository,
             IProductClient IProductClient,
-            IClientClient IClientClient,
+            IUserClient IUserClient,
             SaleEventProducer saleEventProducer,
             ICanceledRepository iCanceledRepository,
             IPaymentClient iPaymentClient,
@@ -54,7 +54,7 @@ public class SaleService implements ISaleService {
     ) {
         this.iSaleRepository = iSaleRepository;
         this.IProductClient = IProductClient;
-        this.IClientClient = IClientClient;
+        this.IUserClient = IUserClient;
         this.saleEventProducer = saleEventProducer;
         this.iCanceledRepository = iCanceledRepository;
         this.iPaymentClient = iPaymentClient;
@@ -82,37 +82,37 @@ public class SaleService implements ISaleService {
     }
 
     @Override
-    public ClientDto getClientData(String id) {
+    public UserDto getUserData(String id) {
         try {
-            return IClientClient.getClientData(id);
+            return IUserClient.getUserData(id);
         } catch (RetryableException e) {
-            throw new ServiceUnavailableException("Client Microservice");
+            throw new ServiceUnavailableException("User Microservice");
         } catch (FeignException e) {
             switch (e.status()) {
                 case 404:
-                    throw new ClientNotFoundException();
+                    throw new UserNotFoundException();
                 case 400:
-                    throw new ClientDataIncompatibleException();
+                    throw new IncompatibleUserDataException();
                 default:
-                    throw new ErrorRetrievingClientDataException();
+                    throw new ErrorRetrievingUserDataException();
             }
         }
     }
 
     @Override
     public Sale makeSale(
-            String clientId,
-            String clientCpf,
+            String userId,
+            String userCpf,
             Double totalValue,
             List<Item> products
     ) {
-        Client client = Client.builder()
-                .id(clientId)
-                .cpf(clientCpf)
+        User user = User.builder()
+                .id(userId)
+                .cpf(userCpf)
                 .build();
 
         Sale sale = Sale.builder()
-                .client(client)
+                .user(user)
                 .status(Status.CREATED)
                 .date(LocalDateTime.now())
                 .totalValue(totalValue)
@@ -123,7 +123,7 @@ public class SaleService implements ISaleService {
         Sale newSale = iSaleRepository.save(sale);
         saleEventProducer.setSaleEvent(new SetSaleEventDto(
                 newSale.getId(),
-                newSale.getClient().getId(),
+                newSale.getUser().getId(),
                 newSale.getStatus(),
                 newSale.getItems()
         ));
@@ -137,15 +137,15 @@ public class SaleService implements ISaleService {
     }
 
     @Override
-    public OperationHttpStatusCodeDto cancelSale(String saleId, String clientId) {
+    public OperationHttpStatusCodeDto cancelSale(String saleId, String userId) {
         Optional<Sale> saleResponse = iSaleRepository.findById(saleId);
 
-        if (saleResponse.isEmpty()) return this.cancelCompletedSale(saleId, clientId);
+        if (saleResponse.isEmpty()) return this.cancelCompletedSale(saleId, userId);
 
         Sale sale = saleResponse.get();
-        String saleClientId = sale.getClient().getId();
+        String saleUserId = sale.getUser().getId();
 
-        if (!saleClientId.equals(clientId)) throw new PermissionDeniedException();
+        if (!saleUserId.equals(userId)) throw new PermissionDeniedException();
 
         iSaleRepository.deleteById(saleId);
 
@@ -158,7 +158,7 @@ public class SaleService implements ISaleService {
         iCanceledRepository.save(canceled);
         saleEventProducer.setSaleEvent(new SetSaleEventDto(
                 saleId,
-                clientId,
+                userId,
                 Status.CANCELED,
                 sale.getItems()
         ));
@@ -166,11 +166,11 @@ public class SaleService implements ISaleService {
         return new OperationHttpStatusCodeDto("Sale canceled successfully!", HttpStatus.OK);
     }
 
-    public OperationHttpStatusCodeDto cancelCompletedSale(String saleId, String clientId) {
+    public OperationHttpStatusCodeDto cancelCompletedSale(String saleId, String userId) {
         Completed sale = iCompletedRepository.findBySaleId(saleId).orElseThrow(SaleNotFoundException::new);
-        String saleClientId = sale.getSale().getClient().getId();
+        String saleUserId = sale.getSale().getUser().getId();
 
-        if (!saleClientId.equals(clientId)) throw new PermissionDeniedException();
+        if (!saleUserId.equals(userId)) throw new PermissionDeniedException();
 
         PaymentDto payment = iPaymentClient.getPaymentInfo(saleId);
         Instant dateApproved = payment.payment().payment().dateApproved();
@@ -191,7 +191,7 @@ public class SaleService implements ISaleService {
         iCompletedRepository.deleteById(sale.getId());
         saleEventProducer.setSaleEvent(new SetSaleEventDto(
                 saleId,
-                clientId,
+                userId,
                 Status.CANCELED,
                 sale.getSale().getItems()
         ));

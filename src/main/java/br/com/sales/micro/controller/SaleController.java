@@ -64,7 +64,7 @@ public class SaleController {
                     ),
                     @ApiResponse(
                             responseCode = "404",
-                            description = "Product or Client not found",
+                            description = "Product or User not found!",
                             content = @Content(
                                     mediaType = "application/json",
                                     schema = @Schema(implementation = DefaultErrorResponseDto.class)
@@ -105,12 +105,12 @@ public class SaleController {
             }
     )
     public ResponseEntity<ReturnSaleDto> makeSale(@Valid @RequestBody MakeSaleDto productBarCodeListDto) {
-        String clientId = productBarCodeListDto.clientId();
+        String userId = productBarCodeListDto.userId();
         List<ProductBasicInfoDto> products = productBarCodeListDto.products();
         List<Long> barCodes = new ArrayList<>();
         double totalValue = 0.0;
 
-        String clientCpf = iSaleService.getClientData(clientId).client().getCpf();
+        String userCpf = iSaleService.getUserData(userId).user().getCpf();
 
         products.stream().forEach((info) -> {
             barCodes.add(info.productBarCode());
@@ -137,7 +137,7 @@ public class SaleController {
 
         if (!productBarCodeListDto.totalValue().equals(totalValue)) throw new InconsistentValueException();
 
-        Sale newSale = iSaleService.makeSale(clientId, clientCpf, totalValue, productsData);
+        Sale newSale = iSaleService.makeSale(userId, userCpf, totalValue, productsData);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(new ReturnSaleDto("Sale started successfully!", newSale));
     }
@@ -248,9 +248,9 @@ public class SaleController {
     )
     public ResponseEntity<SaleCanceledDto> cancelSale(@Valid @RequestBody CancelSaleDto cancelSaleDto) {
         String saleId = cancelSaleDto.saleId();
-        String clientId = cancelSaleDto.clientId();
+        String userId = cancelSaleDto.userId();
 
-        OperationHttpStatusCodeDto response = iSaleService.cancelSale(saleId, clientId);
+        OperationHttpStatusCodeDto response = iSaleService.cancelSale(saleId, userId);
 
         return ResponseEntity.status(response.statusCode()).body(new SaleCanceledDto(response.message()));
     }

@@ -1,9 +1,9 @@
 package br.com.sales.micro.infra;
 
 import br.com.sales.micro.exception.*;
-import br.com.sales.micro.exception.client.ClientDataIncompatibleException;
-import br.com.sales.micro.exception.client.ClientNotFoundException;
-import br.com.sales.micro.exception.client.ErrorRetrievingClientDataException;
+import br.com.sales.micro.exception.user.IncompatibleUserDataException;
+import br.com.sales.micro.exception.user.UserNotFoundException;
+import br.com.sales.micro.exception.user.ErrorRetrievingUserDataException;
 import br.com.sales.micro.exception.product.ErrorRetrievingProductDataException;
 import br.com.sales.micro.exception.product.InsufficientProductsException;
 import br.com.sales.micro.exception.product.ProductDataIncompatibleException;
@@ -75,7 +75,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler({
             ServiceUnavailableException.class,
             ErrorRetrievingProductDataException.class,
-            ErrorRetrievingClientDataException.class
+            ErrorRetrievingUserDataException.class
     })
     private ResponseEntity<DefaultErrorResponse> gatewayErrorHandler(RuntimeException exception) {
         return this.responseConstructor(
@@ -87,7 +87,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler({
             SaleNotFoundException.class,
             ProductNotFoundException.class,
-            ClientNotFoundException.class
+            UserNotFoundException.class
     })
     private ResponseEntity<DefaultErrorResponse> recordNotFoundHandler(RuntimeException exception) {
         return this.responseConstructor(
@@ -98,7 +98,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler({
             ProductDataIncompatibleException.class,
-            ClientDataIncompatibleException.class
+            IncompatibleUserDataException.class
     })
     private ResponseEntity<DefaultErrorResponse> errorRequestingDataHandler(RuntimeException exception) {
         return this.responseConstructor(

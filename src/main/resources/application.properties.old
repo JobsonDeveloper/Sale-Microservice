@@ -3,7 +3,7 @@ server.port=
 spring.application.zone=America/Recife
 
 # Other microservices port
-client.micro.port=
+user.micro.port=
 product.micro.port=
 payment.micro.url=
 

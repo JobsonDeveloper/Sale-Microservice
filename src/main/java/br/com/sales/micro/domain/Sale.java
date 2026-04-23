@@ -22,7 +22,7 @@ public class Sale {
     private Status status;
     private LocalDateTime date;
     private Double totalValue;
-    private Client client;
+    private User user;
     private List<Item> items;
 
     @CreatedDate
